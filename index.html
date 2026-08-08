@@ -35,7 +35,7 @@ scrollbar-width: none;  /* Firefox */
 }
 /* Custom Print Styles */
 @page {
-  size: A4 landscape;
+  size: A4 portrait;
   margin: 5mm;
 }
 @media print {
@@ -49,7 +49,7 @@ scrollbar-width: none;  /* Firefox */
   }
 
   body {
-    zoom: 0.72;
+    zoom: 0.62;
     overflow: visible !important;
   }
 
@@ -99,24 +99,24 @@ scrollbar-width: none;  /* Firefox */
   }
 
   th {
-    padding: 2px 3px !important;
-    font-size: 9px !important;
-    height: 24px !important;
+    padding: 1.5px 2px !important;
+    font-size: 8px !important;
+    height: 20px !important;
   }
 
   td {
-    padding: 2px 3px !important;
-    font-size: 9px !important;
-    height: 22px !important;
+    padding: 1.5px 2px !important;
+    font-size: 8px !important;
+    height: 19px !important;
   }
 
   tbody tr {
-    height: 22px !important;
+    height: 19px !important;
   }
 
   textarea {
-    min-height: 34px !important;
-    height: 34px !important;
+    min-height: 28px !important;
+    height: 28px !important;
     padding: 4px !important;
   }
 
@@ -1075,7 +1075,7 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 {year}년 {month}월 개인선택활동 체크리스트
 </h2>
 </div>
-<span className="text-base font-black text-white bg-transparent border-none px-0 py-0">
+<span className="text-base font-black text-white bg-transparent border-none px-0 py-0 print:text-black">
 {currentParticipant.name} 이용인
 </span>
 </div>
@@ -1091,7 +1091,7 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 {act.label}
 </th>
 ))}
-<th className="p-2.5 min-w-[140px]">비고</th>
+<th className="p-2 w-[70px]">비고</th>
 </tr>
 </thead>
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
@@ -1173,13 +1173,13 @@ isInactive
 </td>
 );
 })}
-<td className="p-1.5">
+<td className="p-1">
 <input
 type="text"
 value={note}
 onChange={(e) => handlePersonalNoteChange(d.dateKey, e.target.value)}
 placeholder="특이사항 메모"
-className="w-full bg-transparent px-2.5 py-1.5 rounded-lg text-xs border border-transparent focus:border-slate-300 focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition print:placeholder-transparent"
+className="w-full bg-transparent px-1.5 py-1 rounded-md text-[11px] border border-transparent focus:border-slate-300 focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition print:placeholder-transparent"
 />
 </td>
 </tr>
@@ -1232,7 +1232,7 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 {year}년 {month}월 일상생활지원 체크리스트
 </h2>
 </div>
-<span className="text-base font-black text-white bg-transparent border-none px-0 py-0">
+<span className="text-base font-black text-white bg-transparent border-none px-0 py-0 print:text-black">
 {currentParticipant.name} 이용인
 </span>
 </div>
