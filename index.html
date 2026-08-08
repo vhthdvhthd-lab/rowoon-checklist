@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="ko" class="h-full">
 <head>
 <meta charset="UTF-8" />
@@ -376,6 +376,83 @@ scrollbar-width: none;  /* Firefox */
     font-size: 11px !important;
   }
 
+  .print-card .print-summary span {
+    font-size: 11px !important;
+  }
+}
+</style>
+
+
+<style>
+/* =========================================================
+   최종 인쇄 폭 보정
+   - A4 세로
+   - 좌우 10mm 여백 유지
+   - 오른쪽 1~2px 잘림 방지
+   - 화면에는 영향 없음
+   ========================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 20mm 10mm 15mm 10mm;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  main > .grid {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-card {
+    /* 인쇄 가능 폭 190mm보다 아주 조금 여유를 둠 */
+    width: 189.5mm !important;
+    max-width: calc(100% - 0.5mm) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  .print-card table {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-card th,
+  .print-card td {
+    box-sizing: border-box !important;
+  }
+
+  /* 인쇄 글씨 11px 유지 */
+  .print-card table thead th,
+  .print-card table thead td,
+  .print-card table tbody td,
+  .print-card table tbody td input,
+  .print-card table tbody td textarea,
+  .print-card table tbody td button,
+  .print-card .print-summary,
   .print-card .print-summary span {
     font-size: 11px !important;
   }
@@ -1311,7 +1388,7 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 {}
 {(viewTab === 'personal' || viewTab === 'both') && (
 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none print:break-inside-avoid print-card">
-<div className="bg-[#192755] text-white px-4 py-2.5 flex items-center justify-between print:bg-slate-200 print:text-black print:px-2 print:py-1">
+<div className="bg-[#192755] text-white px-4 py-2.5 flex items-center justify-between print:bg-slate-200 print:text-black print:px-2 print:py-2">
 <div className="flex items-center gap-2">
 <IconCheckSquare className="w-5 h-5 text-[#FD6D9A]" />
 <h2 className="font-extrabold text-base print-title-black">
