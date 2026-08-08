@@ -12,7 +12,7 @@
       darkMode: 'class',
       theme: {
         extend: {
-          colors: { 
+          colors: {
             brand: {
               navy: '#192755',
               pink: '#FD6D9A',
@@ -156,6 +156,12 @@
       { code: '02', name: '박교사', role: 'teacher', teacherName: '박교사' },
       { code: '03', name: '이교사', role: 'teacher', teacherName: '이교사' }
     ];
+
+    const INITIAL_FACILITY_INFO = {
+      name: '로운주간이용센터',
+      phone: '02-1234-5678',
+      facilityCode: '제2024-31105호'
+    };
 
     const INITIAL_TEACHERS = ['김교사', '박교사', '이교사'];
 
@@ -1450,11 +1456,31 @@
                           placeholder="기관명 (예: 로운주간이용센터)"
                           className="w-full p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold"
                         />
-
                       </div>
-                               </div>
-                             </div>
-            
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 mb-0.5">대표 연락처 (전화번호)</label>
+                          <input
+                            type="text"
+                            value={facilityInfo.phone}
+                            onChange={(e) => handleUpdateFacilityInfo('phone', e.target.value)}
+                            placeholder="02-1234-5678"
+                            className="w-full p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-500 mb-0.5">시설 신고번호 (선택)</label>
+                          <input
+                            type="text"
+                            value={facilityInfo.facilityCode || ''}
+                            onChange={(e) => handleUpdateFacilityInfo('facilityCode', e.target.value)}
+                            placeholder="제2024-31105호"
+                            className="w-full p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   {/* TEACHER & PIN CODE MANAGEMENT SECTION */}
                   <div className="space-y-3 bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
