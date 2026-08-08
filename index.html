@@ -41,11 +41,27 @@
       scrollbar-width: none;  /* Firefox */
     }
 
+    /* Compact select: 브라우저 기본의 두꺼운 V 화살표를 숨기고 작은 화살표로 표시 */
+    .compact-select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23cbd5e1' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1px center;
+      background-size: 9px 5px;
+      padding-right: 13px !important;
+    }
+
     /* Custom Print Styles */
     @media print {
+      *,
+      *::before,
+      *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
       body {
         background-color: white !important;
-        color: black !important;
       }
       .no-print {
         display: none !important;
@@ -236,6 +252,8 @@
 
       const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null);
       const [statsScope, setStatsScope] = useState('month');
+      const [statsYear, setStatsYear] = useState(today.getFullYear());
+      const [statsMonth, setStatsMonth] = useState(today.getMonth() + 1);
 
       const [checklistData, setChecklistData] = useState(() => {
         const saved = localStorage.getItem('daycare_checklists_v2');
@@ -609,14 +627,16 @@
         window.print();
       };
 
+      const statsMonthKey = `${statsYear}-${String(statsMonth).padStart(2, '0')}`;
+
       const extendedStats = useMemo(() => {
         const pData = checklistData[selectedParticipantId] || {};
         let targetKeys = Object.keys(pData);
 
         if (statsScope === 'month') {
-          targetKeys = targetKeys.filter(k => k === monthKey);
+          targetKeys = targetKeys.filter(k => k === statsMonthKey);
         } else if (statsScope === 'year') {
-          targetKeys = targetKeys.filter(k => k.startsWith(`${year}-`));
+          targetKeys = targetKeys.filter(k => k.startsWith(`${statsYear}-`));
         }
 
         let totalAttendance = 0;
@@ -643,6 +663,46 @@
             if (d.meal) mealCounts[d.meal] = (mealCounts[d.meal] || 0) + 1;
           });
         });
+
+        // 전체 이용인 등원 횟수: 선택한 조회기간의 모든 이용인을 합산
+        let allParticipantAttendance = 0;
+        let allParticipantAbsent = 0;
+        let allParticipantUnsupported = 0;
+
+        participants.forEach(participant => {
+          const participantData = checklistData[participant.id] || {};
+          let participantKeys = Object.keys(participantData);
+
+          if (statsScope === 'month') {
+            participantKeys = participantKeys.filter(k => k === statsMonthKey);
+          } else if (statsScope === 'year') {
+            participantKeys = participantKeys.filter(k => k.startsWith(`${statsYear}-`));
+          }
+
+          participantKeys.forEach(mKey => {
+            const days = participantData[mKey]?.days || {};
+            Object.values(days).forEach(d => {
+              if (d.status === '등원') allParticipantAttendance++;
+              else if (d.status === '결석') allParticipantAbsent++;
+              else if (d.status === '미지원') allParticipantUnsupported++;
+            });
+          });
+        });
+
+        // 월간 조회에서는 평일 기준으로 "이용인 수 × 운영일수"를 함께 표시
+        const getWeekdayCount = (targetYear, targetMonth) => {
+          const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+          let count = 0;
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dow = new Date(targetYear, targetMonth - 1, d).getDay();
+            if (dow !== 0 && dow !== 6) count++;
+          }
+          return count;
+        };
+
+        const expectedDaysPerParticipant = statsScope === 'month'
+          ? getWeekdayCount(statsYear, statsMonth)
+          : null;
 
         const totalDays = totalAttendance + totalAbsent + totalUnsupported || 1;
         const overallAttendanceRate = Math.round((totalAttendance / totalDays) * 100);
@@ -678,9 +738,15 @@
           mealCounts,
           maxPersonalCount,
           targetMonthKeysCount: targetKeys.length || 1,
-          monthlyTrend
+          monthlyTrend,
+          allParticipantAttendance,
+          allParticipantAbsent,
+          allParticipantUnsupported,
+          allParticipantCount: participants.length,
+          expectedDaysPerParticipant,
+          expectedTotalAttendance: expectedDaysPerParticipant ? expectedDaysPerParticipant * participants.length : null
         };
-      }, [checklistData, selectedParticipantId, statsScope, year, monthKey]);
+      }, [checklistData, selectedParticipantId, participants, statsScope, statsYear, statsMonth, statsMonthKey]);
 
       if (!currentAccount) {
         return (
@@ -781,7 +847,7 @@
       }
 
       return (
-        <div className="min-h-screen pb-10 transition-colors duration-200 print:bg-white print:text-black">
+        <div className="min-h-screen pb-10 transition-colors duration-200">
           
           {/* Toast Notification */}
           {toastMessage && (
@@ -800,11 +866,7 @@
                   <h1 className="font-extrabold text-base sm:text-lg leading-tight tracking-tight flex items-center gap-2">
                     {facilityInfo.name}
                   </h1>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-300 font-medium">
-                    <span className="flex items-center gap-1">
-                      {facilityInfo.phone}
-                    </span>
-                  </div>
+
                 </div>
               </div>
 
@@ -836,7 +898,7 @@
                     value={year}
                     onChange={(e) => setYear(Number(e.target.value))}
                     aria-label="연도 선택"
-                    className="bg-transparent font-extrabold focus:outline-none cursor-pointer"
+                    className="compact-select bg-transparent text-[11px] font-extrabold focus:outline-none cursor-pointer"
                   >
                     {[2024, 2025, 2026, 2027, 2028].map(y => (
                       <option key={y} value={y} className="bg-slate-800 text-white">{y}년</option>
@@ -847,7 +909,7 @@
                     value={month}
                     onChange={(e) => setMonth(Number(e.target.value))}
                     aria-label="월 선택"
-                    className="bg-transparent font-extrabold focus:outline-none cursor-pointer ml-1"
+                    className="compact-select bg-transparent text-[11px] font-extrabold focus:outline-none cursor-pointer ml-0.5"
                   >
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                       <option key={m} value={m} className="bg-slate-800 text-white">{m}월</option>
@@ -863,7 +925,7 @@
                     value={teacherFilter}
                     onChange={(e) => setTeacherFilter(e.target.value)}
                     aria-label="담당 교사 필터"
-                    className="bg-transparent font-extrabold focus:outline-none cursor-pointer text-sky-300"
+                    className="compact-select bg-transparent text-[11px] font-extrabold focus:outline-none cursor-pointer text-sky-300"
                   >
                     <option value="전체" className="bg-slate-800 text-white">전체 이용인 보기 ({participants.length}명)</option>
                     {teachers.map(t => (
@@ -876,7 +938,12 @@
 
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => setIsStatsModalOpen(true)}
+                    onClick={() => {
+                       setStatsYear(year);
+                       setStatsMonth(month);
+                       setStatsScope('month');
+                       setIsStatsModalOpen(true);
+                     }}
                     className="px-3 py-1.5 bg-[#FD6D9A] hover:bg-rose-500 text-white font-bold rounded-xl flex items-center gap-1 transition shadow-xs cursor-pointer"
                     title="상세 통계분석"
                   >
@@ -1098,14 +1165,14 @@
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none">
                   
                   {/* Header */}
-                  <div className="bg-[#192755] text-white px-4 py-3.5 flex items-center justify-between print:bg-slate-200 print:text-black">
+                  <div className="bg-[#192755] text-white px-4 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <IconCheckSquare className="w-5 h-5 text-[#FD6D9A] print:text-black" />
+                      <IconCheckSquare className="w-5 h-5 text-[#FD6D9A]" />
                       <h2 className="font-extrabold text-base">
                         {year}년 {month}월 개인선택활동 체크리스트
                       </h2>
                     </div>
-                    <span className="text-sm bg-white/20 px-3.5 py-1 rounded-full font-black text-white border border-white/20 shadow-xs print:bg-transparent print:text-black print:border-black">
+                    <span className="text-sm bg-white/20 px-3.5 py-1 rounded-full font-black text-white border border-white/20 shadow-xs print:border-black">
                       {currentParticipant.name} 이용인
                     </span>
                   </div>
@@ -1114,7 +1181,7 @@
                   <div className="overflow-x-auto flex-1">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:bg-slate-100 print:text-black print:border-black">
+                        <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:border-black">
                           <th className="p-2 w-14 border-r border-slate-200 dark:border-slate-600 print:border-black">날짜</th>
                           <th className="p-2 w-12 border-r border-slate-200 dark:border-slate-600 print:border-black">요일</th>
                           <th className="p-2 w-20 border-r border-slate-200 dark:border-slate-600 print:border-black">상태</th>
@@ -1142,27 +1209,27 @@
                           else if (status === '미지원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 
                           return (
-                            <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12 print:bg-white`}>
+                            <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
                               
                               {/* Date */}
-                              <td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black print:text-black">
+                              <td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black">
                                 {d.day}일
                               </td>
 
                               {/* Day Name */}
-                              <td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black print:text-black ${
+                              <td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black ${
                                 d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ? 'text-rose-600 dark:text-rose-400' : ''
                               }`}>
                                 {d.dayName}
                               </td>
 
                               {/* Status Select */}
-                              <td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black print:text-black">
+                              <td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black">
                                 <select
                                   value={status}
                                   onChange={(e) => handleStatusChange(d.dateKey, e.target.value)}
                                   aria-label={`${d.day}일 출석 상태`}
-                                  className={`text-xs font-black rounded-lg px-1.5 py-1 border cursor-pointer print:bg-white print:text-black print:border-none ${
+                                  className={`text-xs font-black rounded-lg px-1.5 py-1 border cursor-pointer print:border-none ${
                                     status === '등원'
                                       ? 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200'
                                       : status === '결석'
@@ -1185,11 +1252,11 @@
                                     <button
                                       disabled={isInactive}
                                       onClick={() => handlePersonalToggle(d.dateKey, act.key)}
-                                      className={`w-8 h-8 rounded-xl font-black text-base transition-all flex items-center justify-center mx-auto border-2 cursor-pointer print:border-none print:text-black ${
+                                      className={`w-8 h-8 rounded-xl font-black text-base transition-all flex items-center justify-center mx-auto border-2 cursor-pointer print:border-none ${
                                         isInactive
                                           ? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
                                           : isChecked
-                                          ? 'bg-[#FD6D9A] text-white border-rose-400 shadow-md scale-105 print:bg-transparent print:text-black'
+                                          ? 'bg-[#FD6D9A] text-white border-rose-400 shadow-md scale-105'
                                           : 'bg-slate-100 dark:bg-slate-700/80 text-slate-300 dark:text-slate-500 border-slate-200 dark:border-slate-600 hover:border-[#FD6D9A] hover:bg-rose-50 dark:hover:bg-rose-950/30'
                                       }`}
                                     >
@@ -1207,7 +1274,7 @@
                                   value={note}
                                   onChange={(e) => handlePersonalNoteChange(d.dateKey, e.target.value)}
                                   placeholder={isInactive ? status : "특이사항 메모"}
-                                  className="w-full bg-transparent px-2.5 py-1.5 rounded-lg text-xs border border-transparent focus:border-slate-300 focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition print:placeholder-transparent print:text-black"
+                                  className="w-full bg-transparent px-2.5 py-1.5 rounded-lg text-xs border border-transparent focus:border-slate-300 focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition print:placeholder-transparent"
                                 />
                               </td>
 
@@ -1219,8 +1286,8 @@
                   </div>
 
                   {/* Automatic Totals Footer */}
-                  <div className="bg-slate-100 dark:bg-slate-900 p-3.5 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs font-bold print:bg-white print:border-black print:text-black">
-                    <span className="text-[#192755] dark:text-sky-400 flex items-center gap-1.5 font-extrabold print:text-black">
+                  <div className="bg-slate-100 dark:bg-slate-900 p-3.5 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs font-bold print:border-black">
+                    <span className="text-[#192755] dark:text-sky-400 flex items-center gap-1.5 font-extrabold">
                       월간 개인활동 자동 합계:
                     </span>
                     <div className="flex flex-wrap gap-2 text-xs">
@@ -1232,8 +1299,8 @@
                         }, 0);
 
                         return (
-                          <span key={act.key} className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs print:border-black print:text-black">
-                            {act.label}: <span className="text-[#FD6D9A] font-black text-sm print:text-black">{count}회</span>
+                          <span key={act.key} className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs print:border-black">
+                            {act.label}: <span className="text-[#FD6D9A] font-black text-sm">{count}회</span>
                           </span>
                         );
                       })}
@@ -1241,9 +1308,9 @@
                   </div>
 
                   {/* Personal Activity Monthly Integrated Notes */}
-                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 space-y-1.5 print:bg-white print:border-black">
-                    <label className="text-xs font-black text-[#192755] dark:text-sky-400 flex items-center gap-1.5 print:text-black">
-                      <IconFileText className="w-4 h-4 text-[#FD6D9A] print:text-black" />
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 space-y-1.5 print:border-black">
+                    <label className="text-xs font-black text-[#192755] dark:text-sky-400 flex items-center gap-1.5">
+                      <IconFileText className="w-4 h-4 text-[#FD6D9A]" />
                       개인선택활동 특이사항 및 종합 의견 (활동내용)
                     </label>
                     <textarea
@@ -1251,7 +1318,7 @@
                       value={currentMonthRecord.integratedPersonalNote || ''}
                       onChange={(e) => handleIntegratedPersonalNoteChange(e.target.value)}
                       placeholder="해당 월의 개인선택활동 관련 종합 특이사항, 진척도 및 총평/활동 내용을 입력하세요..."
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-[#192755] focus:outline-none transition resize-y print:border-slate-400 print:text-black print:placeholder-transparent"
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-[#192755] focus:outline-none transition resize-y print:border-slate-400 print:placeholder-transparent"
                     />
                   </div>
 
@@ -1263,14 +1330,14 @@
                 <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none">
                   
                   {/* Header */}
-                  <div className="bg-[#192755] text-white px-4 py-3.5 flex items-center justify-between print:bg-slate-200 print:text-black">
+                  <div className="bg-[#192755] text-white px-4 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <IconCheckSquare className="w-5 h-5 text-sky-400 print:text-black" />
+                      <IconCheckSquare className="w-5 h-5 text-sky-400" />
                       <h2 className="font-extrabold text-base">
                         {year}년 {month}월 일상생활지원 체크리스트
                       </h2>
                     </div>
-                    <span className="text-sm bg-white/10 px-3.5 py-1 rounded-full font-black text-sky-200 border border-white/10 print:bg-transparent print:text-black print:border-black">
+                    <span className="text-sm bg-white/10 px-3.5 py-1 rounded-full font-black text-sky-200 border border-white/10 print:border-black">
                       {currentParticipant.name} 이용인
                     </span>
                   </div>
@@ -1279,7 +1346,7 @@
                   <div className="overflow-x-auto flex-1">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:bg-slate-100 print:text-black print:border-black">
+                        <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:border-black">
                           <th className="p-2 w-14 border-r border-slate-200 dark:border-slate-600 print:border-black">날짜</th>
                           <th className="p-2 w-12 border-r border-slate-200 dark:border-slate-600 print:border-black">요일</th>
                           <th className="p-2 w-20 border-r border-slate-200 dark:border-slate-600 print:border-black">상태</th>
@@ -1303,23 +1370,23 @@
                           else if (status === '미지원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 
                           return (
-                            <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12 print:bg-white`}>
+                            <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
                               
                               {/* Date */}
-                              <td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black print:text-black">
+                              <td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black">
                                 {d.day}일
                               </td>
 
                               {/* Day Name */}
-                              <td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black print:text-black ${
+                              <td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black ${
                                 d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ? 'text-rose-600 dark:text-rose-400' : ''
                               }`}>
                                 {d.dayName}
                               </td>
 
                               {/* Status */}
-                              <td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black print:text-black">
-                                <span className={`text-xs font-black rounded-lg px-2 py-1 inline-block print:bg-white print:text-black ${
+                              <td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black">
+                                <span className={`text-xs font-black rounded-lg px-2 py-1 inline-block ${
                                   status === '등원'
                                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
                                     : status === '결석'
@@ -1338,11 +1405,11 @@
                                       key={lvl}
                                       disabled={isInactive}
                                       onClick={() => handleOralChange(d.dateKey, lvl)}
-                                      className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none print:text-black ${
+                                      className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none ${
                                         isInactive
                                           ? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
                                           : oral === lvl
-                                          ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:bg-transparent print:text-black print:font-extrabold'
+                                          ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:font-extrabold'
                                           : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-[#192755] hover:bg-slate-200 dark:hover:bg-slate-600 print:opacity-20'
                                       }`}
                                     >
@@ -1360,11 +1427,11 @@
                                       key={lvl}
                                       disabled={isInactive}
                                       onClick={() => handleMealChange(d.dateKey, lvl)}
-                                      className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none print:text-black ${
+                                      className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none ${
                                         isInactive
                                           ? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
                                           : meal === lvl
-                                          ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:bg-transparent print:text-black print:font-extrabold'
+                                          ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:font-extrabold'
                                           : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-[#192755] hover:bg-slate-200 dark:hover:bg-slate-600 print:opacity-20'
                                       }`}
                                     >
@@ -1382,18 +1449,18 @@
                   </div>
 
                   {/* Daily Support Automatic Totals Footer */}
-                  <div className="bg-slate-100 dark:bg-slate-900 p-3.5 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs font-bold print:bg-white print:border-black print:text-black">
-                    <span className="text-[#192755] dark:text-sky-400 flex items-center gap-1.5 font-extrabold print:text-black">
+                  <div className="bg-slate-100 dark:bg-slate-900 p-3.5 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs font-bold print:border-black">
+                    <span className="text-[#192755] dark:text-sky-400 flex items-center gap-1.5 font-extrabold">
                       월간 일상생활지원 자동 합계:
                     </span>
                     <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs print:border-black print:text-black">
-                        구강관리: <span className="text-sky-600 dark:text-sky-400 font-black text-xs print:text-black">
+                      <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs print:border-black">
+                        구강관리: <span className="text-sky-600 dark:text-sky-400 font-black text-xs">
                           상 {monthDays.filter(d => currentMonthRecord.days[d.dateKey]?.oral === '상').length}회 / 중 {monthDays.filter(d => currentMonthRecord.days[d.dateKey]?.oral === '중').length}회 / 하 {monthDays.filter(d => currentMonthRecord.days[d.dateKey]?.oral === '하').length}회
                         </span>
                       </span>
-                      <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs print:border-black print:text-black">
-                        식생활관리: <span className="text-sky-600 dark:text-sky-400 font-black text-xs print:text-black">
+                      <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs print:border-black">
+                        식생활관리: <span className="text-sky-600 dark:text-sky-400 font-black text-xs">
                           상 {monthDays.filter(d => currentMonthRecord.days[d.dateKey]?.meal === '상').length}회 / 중 {monthDays.filter(d => currentMonthRecord.days[d.dateKey]?.meal === '중').length}회 / 하 {monthDays.filter(d => currentMonthRecord.days[d.dateKey]?.meal === '하').length}회
                         </span>
                       </span>
@@ -1401,9 +1468,9 @@
                   </div>
 
                   {/* Daily Life Support Monthly Integrated Notes */}
-                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 space-y-1.5 print:bg-white print:border-black">
-                    <label className="text-xs font-black text-[#192755] dark:text-sky-400 flex items-center gap-1.5 print:text-black">
-                      <IconFileText className="w-4 h-4 text-sky-500 print:text-black" />
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 space-y-1.5 print:border-black">
+                    <label className="text-xs font-black text-[#192755] dark:text-sky-400 flex items-center gap-1.5">
+                      <IconFileText className="w-4 h-4 text-sky-500" />
                       일상생활지원 특이사항 및 종합 의견
                     </label>
                     <textarea
@@ -1411,7 +1478,7 @@
                       value={currentMonthRecord.integratedDailyNote || ''}
                       onChange={(e) => handleIntegratedNoteChange(e.target.value)}
                       placeholder="해당 월의 일상생활지원 관련 종합 특이사항, 관찰 및 지원 내용을 입력하세요..."
-                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-[#192755] focus:outline-none transition resize-y print:border-slate-400 print:text-black print:placeholder-transparent"
+                      className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs focus:ring-2 focus:ring-[#192755] focus:outline-none transition resize-y print:border-slate-400 print:placeholder-transparent"
                     />
                   </div>
 
@@ -1709,7 +1776,7 @@
                         {currentParticipant.name} 이용인 상세 통계분석
                       </h2>
                       <p className="text-[11px] text-slate-300">
-                        담당: {currentParticipant.teacher} 교사
+                        담당: {currentParticipant.teacher} 교사 · {statsYear}년 {statsMonth}월
                       </p>
                     </div>
                   </div>
@@ -1726,36 +1793,64 @@
                     <IconSparkles className="w-3.5 h-3.5 text-[#FD6D9A]" />
                     조회 기간 선택:
                   </span>
-                  <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold shadow-2xs">
+                  <div className="flex flex-wrap items-center gap-1.5 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold shadow-2xs">
+                    <select
+                      value={statsYear}
+                      onChange={(e) => {
+                        setStatsYear(Number(e.target.value));
+                        setStatsScope('month');
+                      }}
+                      aria-label="통계 연도 선택"
+                      className="compact-select min-w-[66px] bg-transparent text-[11px] font-extrabold text-[#192755] dark:text-slate-200 focus:outline-none cursor-pointer px-1 py-1"
+                    >
+                      {[2024, 2025, 2026, 2027, 2028].map(y => (
+                        <option key={y} value={y} className="bg-white text-slate-800">{y}년</option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={statsMonth}
+                      onChange={(e) => {
+                        setStatsMonth(Number(e.target.value));
+                        setStatsScope('month');
+                      }}
+                      aria-label="통계 월 선택"
+                      className="compact-select min-w-[58px] bg-transparent text-[11px] font-extrabold text-[#192755] dark:text-slate-200 focus:outline-none cursor-pointer px-1 py-1"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                        <option key={m} value={m} className="bg-white text-slate-800">{m}월</option>
+                      ))}
+                    </select>
+
                     <button
                       onClick={() => setStatsScope('month')}
-                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${
                         statsScope === 'month'
                           ? 'bg-[#192755] text-white shadow-2xs'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
-                      현재 월 ({year}년 {month}월)
+                      월별 조회
                     </button>
                     <button
                       onClick={() => setStatsScope('year')}
-                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${
                         statsScope === 'year'
                           ? 'bg-[#192755] text-white shadow-2xs'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
-                      올해 전반 ({year}년)
+                      {statsYear}년 전체
                     </button>
                     <button
                       onClick={() => setStatsScope('all')}
-                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                      className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${
                         statsScope === 'all'
                           ? 'bg-[#192755] text-white shadow-2xs'
                           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
-                      전체 누적 통계
+                      전체 누적
                     </button>
                   </div>
                 </div>
@@ -1801,6 +1896,29 @@
                       <span className="text-[10px] text-amber-600/80 block mt-0.5 font-medium">
                         기록 데이터 기반
                       </span>
+                    </div>
+                  </div>
+
+                  {/* 전체 이용인 등원 집계 */}
+                  <div className="bg-gradient-to-r from-[#192755] to-[#2b3f7d] text-white p-4 rounded-2xl border border-[#192755] shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-[11px] text-sky-200 font-bold mb-1">전체 이용인 등원 일수</div>
+                        <div className="text-2xl font-black">
+                          {extendedStats.allParticipantAttendance}회
+                        </div>
+                        <div className="text-[10px] text-slate-200 mt-1 font-medium">
+                          {extendedStats.allParticipantCount}명 이용인 전체 합산
+                        </div>
+                      </div>
+                      <div className="text-right text-[11px] font-bold">
+                        {extendedStats.expectedDaysPerParticipant
+                          ? <span>{extendedStats.allParticipantCount}명 × {extendedStats.expectedDaysPerParticipant}일 = 최대 {extendedStats.expectedTotalAttendance}회</span>
+                          : <span>조회기간 내 기록된 등원 횟수 합계</span>}
+                        <div className="text-[10px] text-slate-300 font-medium mt-1">
+                          실제 등원 {extendedStats.allParticipantAttendance}회 · 결석 {extendedStats.allParticipantAbsent}회 · 미지원 {extendedStats.allParticipantUnsupported}회
+                        </div>
+                      </div>
                     </div>
                   </div>
 
