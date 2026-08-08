@@ -36,7 +36,7 @@ scrollbar-width: none;  /* Firefox */
 /* Custom Print Styles */
 @page {
   size: A4 portrait;
-  margin: 20mm 10mm 15mm 10mm;
+  margin: 15mm 10mm 15mm 10mm;
 }
 @media print {
   html, body {
@@ -161,11 +161,11 @@ scrollbar-width: none;  /* Firefox */
     max-width: 100% !important;
     margin: 0 !important;
     border: 0.5px solid #555 !important;
-    border-radius: 2px !important;
-    box-sizing: border-box !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
     overflow: visible !important;
     break-inside: avoid !important;
+    box-sizing: border-box !important;
   }
 
   .print-card table {
@@ -178,48 +178,52 @@ scrollbar-width: none;  /* Firefox */
   .print-card.personal-table th:nth-child(1),
   .print-card.personal-table td:nth-child(1),
   .print-card.daily-table th:nth-child(1),
-  .print-card.daily-table td:nth-child(1) { width: 10mm !important; }
+  .print-card.daily-table td:nth-child(1) { width: 9mm !important; }
 
   .print-card.personal-table th:nth-child(2),
   .print-card.personal-table td:nth-child(2),
   .print-card.daily-table th:nth-child(2),
-  .print-card.daily-table td:nth-child(2) { width: 10mm !important; }
+  .print-card.daily-table td:nth-child(2) { width: 7mm !important; }
 
   .print-card.personal-table th:nth-child(3),
   .print-card.personal-table td:nth-child(3),
   .print-card.daily-table th:nth-child(3),
-  .print-card.daily-table td:nth-child(3) { width: 14mm !important; }
+  .print-card.daily-table td:nth-child(3) { width: 13mm !important; }
 
   .print-card.personal-table th:last-child,
-  .print-card.personal-table td:last-child { width: 24mm !important; }
+  .print-card.personal-table td:last-child { width: 30mm !important; }
 
-  /* 인쇄 테이블 */
-.print-card table {
-  width: 100% !important;
-  table-layout: fixed !important;
-  border-collapse: collapse !important;
+  .print-card table {
+    border: 0.5px solid #555 !important;
+    border-collapse: collapse !important;
+    outline: none !important;
+  }
 
-  /* 테이블 외곽선 */
-  border: 0.5px solid #555 !important;
-}
+  .print-card th,
+  .print-card td {
+    border: 0.5px solid #555 !important;
+    border-color: #555 !important;
+    border-style: solid !important;
+    box-sizing: border-box !important;
+  }
 
-/* 내부 선 */
-.print-card th,
-.print-card td {
-  border: 0.5px solid #555 !important;
-  box-sizing: border-box !important;
-}
+  /* 표 외곽선과 내부선 굵기를 동일하게 유지 */
+  .print-card table,
+  .print-card table th,
+  .print-card table td {
+    outline: none !important;
+  }
 
   .print-card thead tr {
-    height: 9mm !important;
+    height: 10mm !important;
   }
 
   .print-card tbody tr {
-    height: 7.1mm !important;
+    height: 7.2mm !important;
   }
 
   .print-card tbody td {
-    height: 7.1mm !important;
+    height: 7.2mm !important;
     padding-top: 0.5mm !important;
     padding-bottom: 0.5mm !important;
   }
@@ -227,6 +231,10 @@ scrollbar-width: none;  /* Firefox */
   .print-card .print-summary {
     padding-top: 1.5mm !important;
     padding-bottom: 1.5mm !important;
+  }
+
+  .print-card .print-summary span {
+    font-size: 9px !important;
   }
 
   .print-card .print-note-area {
@@ -1193,11 +1201,11 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 <table className="w-full table-fixed text-left text-xs border-collapse personal-table">
 <thead>
 <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:bg-slate-100 print:border-black">
-<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">날짜</th>
-<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">요일</th>
-<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">상태</th>
+<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[11px]">날짜</th>
+<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[11px]">요일</th>
+<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[11px]">상태</th>
 {PERSONAL_ACTIVITIES.map(act => (
-<th key={act.key} className="p-2 w-[74px] border-r border-slate-200 dark:border-slate-600 text-xs text-center print:border-black print:text-[10px]">
+<th key={act.key} className="p-2 w-[74px] border-r border-slate-200 dark:border-slate-600 text-xs text-center print:border-black print:text-[11px]">
 {act.label}
 </th>
 ))}
@@ -1218,10 +1226,10 @@ else if (status === '결석') rowBg = 'bg-rose-50/70 dark:bg-rose-950/30';
 else if (status === '미지원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 return (
 <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
-<td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black">
+<td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black print:text-[11px]">
 {d.day}일
 </td>
-<td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black ${
+<td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black print:text-[11px] ${
 d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ? 'text-rose-600 dark:text-rose-400' : ''
 }`}>
 {d.dayName}
@@ -1350,9 +1358,9 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 <table className="w-full table-fixed text-left text-xs border-collapse daily-table">
 <thead>
 <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:bg-slate-100 print:border-black">
-<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">날짜</th>
-<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">요일</th>
-<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">상태</th>
+<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[11px]">날짜</th>
+<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[11px]">요일</th>
+<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[11px]">상태</th>
 <th className="p-2 border-r border-slate-200 dark:border-slate-600 print:border-black">구강관리 (자립도)</th>
 <th className="p-2">식생활관리 (자립도)</th>
 </tr>
@@ -1371,10 +1379,10 @@ else if (status === '결석') rowBg = 'bg-rose-50/70 dark:bg-rose-950/30';
 else if (status === '미지원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 return (
 <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
-<td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black  print:text-[11px]">
+<td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black">
 {d.day}일
 </td>
-<td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black print:text-[11px] ${
+<td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black ${
 d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ? 'text-rose-600 dark:text-rose-400' : ''
 }`}>
 {d.dayName}
