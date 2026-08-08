@@ -36,7 +36,7 @@ scrollbar-width: none;  /* Firefox */
 /* Custom Print Styles */
 @page {
   size: A4 portrait;
-  margin: 15mm 10mm 15mm 10mm;
+  margin: 20mm 10mm 15mm 10mm;
 }
 @media print {
   html, body {
@@ -292,6 +292,62 @@ scrollbar-width: none;  /* Firefox */
   }
 }
 </style>
+
+<style>
+@media print {
+  /* 인쇄 글씨 크기: 11px */
+  .print-card tbody td,
+  .print-card tbody td input,
+  .print-card tbody td textarea,
+  .print-card tbody td button,
+  .print-card .print-summary,
+  .print-card .print-summary span {
+    font-size: 11px !important;
+  }
+
+  /* 테이블 외곽선은 print-card가 담당하지 않고 table이 담당 */
+  .print-card {
+    border: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .print-card table {
+    border-collapse: collapse !important;
+    border: 0.5px solid #555 !important;
+    outline: none !important;
+  }
+
+  /* 셀의 기본 선 */
+  .print-card th,
+  .print-card td {
+    border-top: 0.5px solid #555 !important;
+    border-bottom: 0.5px solid #555 !important;
+    border-left: 0.5px solid #555 !important;
+    border-right: 0.5px solid #555 !important;
+  }
+
+  /* 테이블 좌/우 외곽에 해당하는 셀 선 제거
+     → table의 좌/우 외곽선만 남겨 선 겹침 방지 */
+  .print-card table tr > th:first-child,
+  .print-card table tr > td:first-child {
+    border-left: 0 !important;
+  }
+
+  .print-card table tr > th:last-child,
+  .print-card table tr > td:last-child {
+    border-right: 0 !important;
+  }
+
+  /* 제목/이름 인쇄 시 검정 */
+  .print-card .print-title-black,
+  .print-card .print-name-black {
+    color: #000 !important;
+    -webkit-text-fill-color: #000 !important;
+  }
+}
+</style>
+
 </head>
 <body class="h-full bg-slate-100 text-slate-800 antialiased selection:bg-rose-500 selection:text-white">
 <div id="root"></div>
