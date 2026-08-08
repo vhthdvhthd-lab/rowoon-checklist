@@ -34,32 +34,109 @@ display: none;
 scrollbar-width: none;  /* Firefox */
 }
 /* Custom Print Styles */
+@page {
+  size: A4 landscape;
+  margin: 5mm;
+}
 @media print {
-body {
-background-color: white !important;
-color: black !important;
--webkit-print-color-adjust: exact !important;
-print-color-adjust: exact !important;
-}
-* {
--webkit-print-color-adjust: exact !important;
-print-color-adjust: exact !important;
-}
-.no-print {
-display: none !important;
-}
-.print-only {
-display: block !important;
-}
-table {
-border-collapse: collapse !important;
-width: 100% !important;
-}
-th, td {
-border: 1px solid #333 !important;
-}
-.print\:bg-white { background-color: inherit !important; }
-.print\:text-black { color: inherit !important; }
+  html, body {
+    width: 100%;
+    min-height: 0 !important;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    zoom: 0.72;
+    overflow: visible !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  main {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  main > .grid {
+    gap: 3mm !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr, td, th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #333 !important;
+  }
+
+  th {
+    padding: 2px 3px !important;
+    font-size: 9px !important;
+    height: 24px !important;
+  }
+
+  td {
+    padding: 2px 3px !important;
+    font-size: 9px !important;
+    height: 22px !important;
+  }
+
+  tbody tr {
+    height: 22px !important;
+  }
+
+  textarea {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 4px !important;
+  }
+
+  input {
+    height: 20px !important;
+    padding: 2px 4px !important;
+    font-size: 9px !important;
+  }
+
+  .print\:bg-white { background-color: inherit !important; }
+  .print\:text-black { color: inherit !important; }
+
+  /* 인쇄 시 화면용 둥근 모서리/여백 최소화 */
+  .rounded-2xl, .rounded-xl {
+    border-radius: 4px !important;
+  }
+
+  .shadow-md, .shadow-xl, .shadow-lg {
+    box-shadow: none !important;
+  }
 }
 </style>
 </head>
@@ -215,6 +292,7 @@ const [newTeacherName, setNewTeacherName] = useState('');
 const [newTeacherCode, setNewTeacherCode] = useState('');
 const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null);
 const [statsScope, setStatsScope] = useState('month');
+const [openStatusDate, setOpenStatusDate] = useState(null);
 const [checklistData, setChecklistData] = useState(() => {
 const saved = localStorage.getItem('daycare_checklists_v2');
 return saved ? JSON.parse(saved) : {};
@@ -989,8 +1067,8 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 <div className={`grid gap-5 ${viewTab === 'both' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
 {}
 {(viewTab === 'personal' || viewTab === 'both') && (
-<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none">
-<div className="bg-[#192755] text-white px-4 py-3.5 flex items-center justify-between print:bg-slate-200">
+<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none print:break-inside-avoid">
+<div className="bg-[#192755] text-white px-4 py-2.5 flex items-center justify-between print:bg-slate-200 print:px-2 print:py-1">
 <div className="flex items-center gap-2">
 <IconCheckSquare className="w-5 h-5 text-[#FD6D9A]" />
 <h2 className="font-extrabold text-base">
@@ -1038,14 +1116,11 @@ d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ?
 }`}>
 {d.dayName}
 </td>
-<td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black">
+<td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black relative">
 <button
 type="button"
-onClick={() => {
-const nextStatus = status === '등원' ? '결석' : status === '결석' ? '미지원' : '등원';
-handleStatusChange(d.dateKey, nextStatus);
-}}
-aria-label={`${d.day}일 출석 상태: ${status}`}
+onClick={() => setOpenStatusDate(openStatusDate === d.dateKey ? null : d.dateKey)}
+aria-label={`${d.day}일 출석 상태 선택`}
 className={`text-[11px] font-black rounded-md px-2 py-1 border cursor-pointer transition ${
 status === '등원'
 ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
@@ -1056,6 +1131,25 @@ status === '등원'
 >
 {status}
 </button>
+{openStatusDate === d.dateKey && (
+<div className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-1 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print">
+{['등원', '결석', '미지원'].map(option => (
+<button
+key={option}
+type="button"
+onClick={() => {
+handleStatusChange(d.dateKey, option);
+setOpenStatusDate(null);
+}}
+className={`block w-full px-2 py-1.5 text-[10px] font-black text-center hover:bg-slate-100 dark:hover:bg-slate-700 ${
+option === status ? 'bg-slate-100 dark:bg-slate-700' : ''
+}`}
+>
+{option}
+</button>
+))}
+</div>
+)}
 </td>
 {PERSONAL_ACTIVITIES.map(act => {
 const isChecked = !!personal[act.key];
@@ -1074,7 +1168,7 @@ isInactive
 : 'bg-slate-100 dark:bg-slate-700/80 text-transparent border-slate-200 dark:border-slate-600 hover:border-[#FD6D9A] hover:bg-rose-50'
 }`}
 >
-{isChecked ? 'V' : ''}
+{isChecked ? '✓' : ''}
 </button>
 </td>
 );
@@ -1082,10 +1176,9 @@ isInactive
 <td className="p-1.5">
 <input
 type="text"
-disabled={isInactive}
 value={note}
 onChange={(e) => handlePersonalNoteChange(d.dateKey, e.target.value)}
-placeholder={isInactive ? status : "특이사항 메모"}
+placeholder="특이사항 메모"
 className="w-full bg-transparent px-2.5 py-1.5 rounded-lg text-xs border border-transparent focus:border-slate-300 focus:bg-white dark:focus:bg-slate-700 focus:outline-none transition print:placeholder-transparent"
 />
 </td>
@@ -1131,8 +1224,8 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 )}
 {}
 {(viewTab === 'daily' || viewTab === 'both') && (
-<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none">
-<div className="bg-[#192755] text-white px-4 py-3.5 flex items-center justify-between print:bg-slate-200">
+<div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col print:border-slate-800 print:shadow-none print:break-inside-avoid">
+<div className="bg-[#192755] text-white px-4 py-2.5 flex items-center justify-between print:bg-slate-200 print:px-2 print:py-1">
 <div className="flex items-center gap-2">
 <IconCheckSquare className="w-5 h-5 text-sky-400" />
 <h2 className="font-extrabold text-base">
@@ -1176,16 +1269,40 @@ d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ?
 }`}>
 {d.dayName}
 </td>
-<td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black">
-<span className={`text-xs font-black rounded-lg px-2 py-1 inline-block ${
+<td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black relative">
+<button
+type="button"
+onClick={() => setOpenStatusDate(openStatusDate === d.dateKey ? null : d.dateKey)}
+aria-label={`${d.day}일 출석 상태 선택`}
+className={`text-[11px] font-black rounded-md px-2 py-1 border cursor-pointer transition ${
 status === '등원'
-? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
+? 'bg-emerald-100 text-emerald-800 border-emerald-300'
 : status === '결석'
-? 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200'
-: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
-}`}>
+? 'bg-rose-100 text-rose-800 border-rose-300'
+: 'bg-slate-200 text-slate-700 border-slate-300'
+}`}
+>
 {status}
-</span>
+</button>
+{openStatusDate === d.dateKey && (
+<div className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-1 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print">
+{['등원', '결석', '미지원'].map(option => (
+<button
+key={option}
+type="button"
+onClick={() => {
+handleStatusChange(d.dateKey, option);
+setOpenStatusDate(null);
+}}
+className={`block w-full px-2 py-1.5 text-[10px] font-black text-center hover:bg-slate-100 dark:hover:bg-slate-700 ${
+option === status ? 'bg-slate-100 dark:bg-slate-700' : ''
+}`}
+>
+{option}
+</button>
+))}
+</div>
+)}
 </td>
 <td className="p-2 border-r border-slate-200 dark:border-slate-700 print:border-black">
 <div className="flex items-center justify-center gap-2.5">
