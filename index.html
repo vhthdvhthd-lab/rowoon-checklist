@@ -49,7 +49,7 @@ scrollbar-width: none;  /* Firefox */
   }
 
   body {
-    zoom: 0.62;
+    zoom: 1 !important;
     overflow: visible !important;
   }
 
@@ -127,7 +127,11 @@ scrollbar-width: none;  /* Firefox */
   }
 
   .print\:bg-white { background-color: inherit !important; }
-  .print\:text-black { color: inherit !important; }
+  .print\:text-black { color: #000 !important; }
+  .print-name-black { color: #000 !important; }
+
+  /* 인쇄 시 가로 스크롤 영역을 페이지 너비에 맞춤 */
+  .overflow-x-auto { overflow: visible !important; }
 
   /* 인쇄 시 화면용 둥근 모서리/여백 최소화 */
   .rounded-2xl, .rounded-xl {
@@ -1075,7 +1079,7 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 {year}년 {month}월 개인선택활동 체크리스트
 </h2>
 </div>
-<span className="text-base font-black text-white bg-transparent border-none px-0 py-0 print:text-black">
+<span className="text-base font-black text-white bg-transparent border-none px-0 py-0 print:text-black print-name-black">
 {currentParticipant.name} 이용인
 </span>
 </div>
@@ -1232,7 +1236,7 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 {year}년 {month}월 일상생활지원 체크리스트
 </h2>
 </div>
-<span className="text-base font-black text-white bg-transparent border-none px-0 py-0 print:text-black">
+<span className="text-base font-black text-white bg-transparent border-none px-0 py-0 print:text-black print-name-black">
 {currentParticipant.name} 이용인
 </span>
 </div>
