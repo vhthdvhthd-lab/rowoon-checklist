@@ -32,14 +32,12 @@
     .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
     @media print {
-      @page { margin: 10mm; }
-      body { background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { background-color: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
       .no-print { display: none !important; }
-      .print-area { width: 100% !important; margin: 0 !important; padding: 0 !important; }
-      table { border: 1px solid #333 !important; }
-      th, td { border: 1px solid #ddd !important; }
-      .bg-brand-navy { background-color: #192755 !important; color: white !important; }
-      .bg-slate-100 { background-color: #f1f5f9 !important; }
+      table { border-collapse: collapse !important; width: 100% !important; }
+      th, td { border: 1px solid #333 !important; }
+      .max-w-7xl { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      main { padding-top: 0 !important; }
     }
   </style>
 </head>
@@ -61,11 +59,20 @@
     const IconUsers = ({ className = "w-4 h-4" }) => (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
     );
-    const IconSettings = ({ className = "w-4 h-4" }) => (
-      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    const IconCheckSquare = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    );
+    const IconPlus = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
     );
     const IconTrash2 = ({ className = "w-4 h-4" }) => (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+    );
+    const IconPrinter = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+    );
+    const IconSettings = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
     );
     const IconX = ({ className = "w-4 h-4" }) => (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -73,8 +80,14 @@
     const IconBarChart2 = ({ className = "w-4 h-4" }) => (
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 20V10m-6 10V4M6 20v-4" /></svg>
     );
+    const IconArrowUp = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+    );
+    const IconArrowDown = ({ className = "w-4 h-4" }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+    );
 
-    // --- 초기 데이터 ---
+    // --- INITIAL DATA ---
     const INITIAL_ACCOUNTS = [
       { code: '00', name: '관리자', role: 'admin', teacherName: '전체' },
       { code: '01', name: '김선생님', role: 'teacher', teacherName: '김선생님' },
@@ -95,44 +108,38 @@
     ];
 
     function App() {
-      // --- 상태 관리 ---
-      const [accounts, setAccounts] = useState(() => JSON.parse(localStorage.getItem('dc_accounts')) || INITIAL_ACCOUNTS);
-      const [facilityInfo, setFacilityInfo] = useState(() => JSON.parse(localStorage.getItem('dc_facility')) || INITIAL_FACILITY_INFO);
-      const [participants, setParticipants] = useState(() => JSON.parse(localStorage.getItem('dc_participants')) || INITIAL_PARTICIPANTS);
-      const [checklistData, setChecklistData] = useState(() => JSON.parse(localStorage.getItem('dc_checklists_v3')) || {});
-      const [currentAccount, setCurrentAccount] = useState(() => JSON.parse(localStorage.getItem('dc_current_acc')) || null);
+      const [accounts, setAccounts] = useState(() => JSON.parse(localStorage.getItem('dc_accounts_v2')) || INITIAL_ACCOUNTS);
+      const [facilityInfo, setFacilityInfo] = useState(() => JSON.parse(localStorage.getItem('dc_facility_v2')) || INITIAL_FACILITY_INFO);
+      const [participants, setParticipants] = useState(() => JSON.parse(localStorage.getItem('dc_participants_v2')) || INITIAL_PARTICIPANTS);
+      const [checklistData, setChecklistData] = useState(() => JSON.parse(localStorage.getItem('dc_checklists_v5')) || {});
+      const [currentAccount, setCurrentAccount] = useState(() => JSON.parse(localStorage.getItem('dc_current_acc_v2')) || null);
       
       const [year, setYear] = useState(new Date().getFullYear());
       const [month, setMonth] = useState(new Date().getMonth() + 1);
       const [selectedParticipantId, setSelectedParticipantId] = useState('1');
-      const [teacherFilter, setTeacherFilter] = useState('전체');
       const [viewTab, setViewTab] = useState('personal');
       
       const [isMgmtOpen, setIsMgmtOpen] = useState(false);
       const [isStatsOpen, setIsStatsOpen] = useState(false);
       const [statsMonth, setStatsMonth] = useState(new Date().getMonth() + 1);
       const [inputCode, setInputCode] = useState('');
-      const [toast, setToast] = useState('');
 
-      // 로컬 스토리지 저장
-      useEffect(() => { localStorage.setItem('dc_accounts', JSON.stringify(accounts)); }, [accounts]);
-      useEffect(() => { localStorage.setItem('dc_facility', JSON.stringify(facilityInfo)); }, [facilityInfo]);
-      useEffect(() => { localStorage.setItem('dc_participants', JSON.stringify(participants)); }, [participants]);
-      useEffect(() => { localStorage.setItem('dc_checklists_v3', JSON.stringify(checklistData)); }, [checklistData]);
-      useEffect(() => { localStorage.setItem('dc_current_acc', JSON.stringify(currentAccount)); }, [currentAccount]);
+      useEffect(() => { localStorage.setItem('dc_accounts_v2', JSON.stringify(accounts)); }, [accounts]);
+      useEffect(() => { localStorage.setItem('dc_facility_v2', JSON.stringify(facilityInfo)); }, [facilityInfo]);
+      useEffect(() => { localStorage.setItem('dc_participants_v2', JSON.stringify(participants)); }, [participants]);
+      useEffect(() => { localStorage.setItem('dc_checklists_v5', JSON.stringify(checklistData)); }, [checklistData]);
+      useEffect(() => { localStorage.setItem('dc_current_acc_v2', JSON.stringify(currentAccount)); }, [currentAccount]);
 
-      const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2000); };
-
-      // --- 로그인 로직 ---
       const handleLogin = (e) => {
         e.preventDefault();
         const acc = accounts.find(a => a.code === inputCode.trim());
-        if (acc) { setCurrentAccount(acc); setInputCode(''); showToast(`${acc.name}님 환영합니다.`); }
-        else alert('번호가 틀렸습니다.');
+        if (acc) { setCurrentAccount(acc); setInputCode(''); }
+        else alert('고유번호가 올바르지 않습니다.');
       };
 
-      // --- 데이터 업데이트 로직 ---
       const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+      const statsMonthKey = `${year}-${String(statsMonth).padStart(2, '0')}`;
+
       const updateCell = (pId, mKey, dKey, field, val) => {
         setChecklistData(prev => {
           const newData = { ...prev };
@@ -141,8 +148,7 @@
           if (!newData[pId][mKey].days[dKey]) newData[pId][mKey].days[dKey] = { status: '등원', personal: {} };
           
           if (field === 'personal') {
-            const current = newData[pId][mKey].days[dKey].personal[val];
-            newData[pId][mKey].days[dKey].personal[val] = !current;
+            newData[pId][mKey].days[dKey].personal[val] = !newData[pId][mKey].days[dKey].personal[val];
           } else {
             newData[pId][mKey].days[dKey][field] = val;
           }
@@ -150,59 +156,46 @@
         });
       };
 
-      // --- 관리 기능 ---
-      const updateAccountName = (code, newName) => {
-        setAccounts(prev => prev.map(a => a.code === code ? { ...a, name: newName } : a));
-      };
-      const updateParticipantName = (id, newName) => {
-        setParticipants(prev => prev.map(p => p.id === id ? { ...p, name: newName } : p));
-      };
-
-      // --- 날짜 계산 ---
       const daysInMonth = useMemo(() => {
         const date = new Date(year, month, 0);
         const days = [];
         for (let i = 1; i <= date.getDate(); i++) {
           const d = new Date(year, month - 1, i);
-          if (d.getDay() !== 0 && d.getDay() !== 6) { // 평일만
+          if (d.getDay() !== 0 && d.getDay() !== 6) {
             days.push({ day: i, dayName: ['일','월','화','수','목','금','토'][d.getDay()], key: `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}` });
           }
         }
         return days;
       }, [year, month]);
 
-      // --- 통계 계산 ---
-      const statsData = useMemo(() => {
-        const targetKey = `${year}-${String(statsMonth).padStart(2, '0')}`;
+      // --- 통계 계산 로직 ---
+      const statsResult = useMemo(() => {
+        const pData = checklistData[selectedParticipantId]?.[statsMonthKey]?.days || {};
+        const pAttend = Object.values(pData).filter(d => d.status === '등원').length;
         
-        // 1. 선택된 이용인 통계
-        const pData = checklistData[selectedParticipantId]?.[targetKey]?.days || {};
-        const attendCount = Object.values(pData).filter(d => d.status === '등원').length;
-        
-        // 2. 시설 전체 참여 횟수 (모든 이용인 등원일 합산)
-        let totalFacilityAttendance = 0;
+        // 시설 전체 참여 지수 (모든 이용인의 등원일수 합계)
+        let totalFacilityAttend = 0;
         participants.forEach(p => {
-          const pDays = checklistData[p.id]?.[targetKey]?.days || {};
-          totalFacilityAttendance += Object.values(pDays).filter(d => d.status === '등원').length;
+          const pMonthDays = checklistData[p.id]?.[statsMonthKey]?.days || {};
+          totalFacilityAttend += Object.values(pMonthDays).filter(d => d.status === '등원').length;
         });
 
-        return { attendCount, totalFacilityAttendance };
-      }, [checklistData, statsMonth, selectedParticipantId, participants]);
+        return { pAttend, totalFacilityAttend };
+      }, [checklistData, statsMonthKey, selectedParticipantId, participants]);
 
       if (!currentAccount) {
         return (
-          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-            <form onSubmit={handleLogin} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center">
-              <div className="w-16 h-16 bg-brand-navy rounded-2xl mx-auto mb-4 flex items-center justify-center text-brand-pink">
-                <IconSettings className="w-8 h-8" />
-              </div>
-              <h1 className="text-2xl font-black mb-6">시스템 접속</h1>
-              <input 
-                type="password" value={inputCode} onChange={e => setInputCode(e.target.value)}
-                placeholder="고유번호 입력" className="w-full border-2 border-slate-200 rounded-xl p-3 text-center text-xl font-bold mb-4 focus:border-brand-pink outline-none"
-              />
-              <button className="w-full bg-brand-navy text-white p-4 rounded-xl font-bold hover:bg-slate-800 transition">로그인</button>
-            </form>
+          <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-3xl p-8 shadow-2xl text-center">
+               <h1 className="text-2xl font-black text-white mb-6 tracking-tight">{facilityInfo.name} 접속</h1>
+               <form onSubmit={handleLogin}>
+                  <input 
+                    type="password" value={inputCode} onChange={e => setInputCode(e.target.value)}
+                    placeholder="고유번호 입력" className="w-full bg-slate-900 border-2 border-slate-700 rounded-2xl p-4 text-center text-2xl font-black text-white focus:border-brand-pink outline-none mb-4"
+                  />
+                  <button className="w-full bg-brand-pink text-white p-4 rounded-2xl font-black hover:bg-rose-500 transition">로그인</button>
+               </form>
+            </div>
           </div>
         );
       }
@@ -210,44 +203,40 @@
       const currentP = participants.find(p => p.id === selectedParticipantId) || participants[0];
 
       return (
-        <div className="min-h-screen pb-12 transition-colors">
-          {toast && <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-brand-navy text-white px-6 py-3 rounded-full shadow-xl z-50 animate-bounce text-sm font-bold">{toast}</div>}
-
-          {/* 헤더 */}
-          <header className="bg-brand-navy text-white p-4 sticky top-0 z-40 no-print shadow-lg">
-            <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-black">{facilityInfo.name}</h1>
-                <div className="flex items-center gap-2 bg-white/10 p-1 rounded-lg text-sm px-3">
-                  <IconCalendar className="text-brand-pink" />
-                  <select value={year} onChange={e => setYear(Number(e.target.value))} className="bg-transparent font-bold">
+        <div className="min-h-screen pb-10 transition-colors duration-200 print:bg-white">
+          {/* HEADER */}
+          <header className="bg-[#192755] text-white shadow-lg sticky top-0 z-30 no-print">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+              <h1 className="font-extrabold text-lg leading-tight">{facilityInfo.name}</h1>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/20 flex items-center gap-2">
+                   <span className="font-black">{currentAccount.name}</span>
+                   <button onClick={() => setCurrentAccount(null)} className="text-[10px] underline opacity-50">로그아웃</button>
+                </div>
+                <div className="flex items-center bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
+                  <IconCalendar className="text-brand-pink mr-1.5" />
+                  <select value={year} onChange={e => setYear(Number(e.target.value))} className="bg-transparent font-extrabold outline-none">
                     {[2024, 2025, 2026].map(y => <option key={y} value={y} className="text-black">{y}년</option>)}
                   </select>
-                  <select value={month} onChange={e => setMonth(Number(e.target.value))} className="bg-transparent font-bold">
+                  <select value={month} onChange={e => setMonth(Number(e.target.value))} className="bg-transparent font-extrabold outline-none ml-1">
                     {Array.from({length:12}, (_,i)=>i+1).map(m => <option key={m} value={m} className="text-black">{m}월</option>)}
                   </select>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setIsStatsOpen(true)} className="bg-brand-pink text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:opacity-90"><IconBarChart2 /> 통계</button>
-                <button onClick={() => setIsMgmtOpen(true)} className="bg-slate-700 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-600"><IconSettings /> 관리</button>
-                <button onClick={() => window.print()} className="bg-sky-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2">인쇄</button>
-                <div className="ml-4 flex items-center gap-2">
-                  <span className="text-sm font-bold opacity-80">{currentAccount.name}</span>
-                  <button onClick={() => setCurrentAccount(null)} className="text-xs underline opacity-50">로그아웃</button>
-                </div>
+                <button onClick={() => setIsStatsOpen(true)} className="px-3 py-1.5 bg-brand-pink hover:bg-rose-500 text-white font-bold rounded-xl flex items-center gap-1"><IconBarChart2 /> 통계</button>
+                <button onClick={() => setIsMgmtOpen(true)} className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl flex items-center gap-1"><IconSettings /> 관리</button>
+                <button onClick={() => window.print()} className="px-3 py-1.5 bg-sky-600 text-white font-bold rounded-xl flex items-center gap-1"><IconPrinter /> 인쇄</button>
               </div>
             </div>
           </header>
 
-          <main className="max-w-7xl mx-auto p-4 space-y-6 print-area">
-            {/* 이용인 선택바 */}
-            <div className="no-print bg-white p-4 rounded-2xl shadow-sm border flex items-center gap-3 overflow-x-auto scrollbar-none">
-              <span className="font-black text-slate-400 whitespace-nowrap"><IconUsers className="inline mb-1" /> 선택:</span>
+          <main className="max-w-7xl mx-auto px-4 pt-6 space-y-4">
+            {/* 이용인 선택 바 */}
+            <div className="no-print bg-white p-3 rounded-2xl shadow-sm border flex items-center gap-2 overflow-x-auto scrollbar-none">
+              <span className="text-xs font-black text-slate-400 px-2">이용인 선택:</span>
               {participants.map(p => (
                 <button 
                   key={p.id} onClick={() => setSelectedParticipantId(p.id)}
-                  className={`px-5 py-2 rounded-xl font-bold whitespace-nowrap transition-all ${selectedParticipantId === p.id ? 'bg-brand-navy text-white scale-105 shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap ${selectedParticipantId === p.id ? 'bg-brand-navy text-white shadow-md scale-105' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}
                 >
                   {p.name}
                 </button>
@@ -255,188 +244,187 @@
             </div>
 
             {/* 인쇄용 상단 정보 */}
-            <div className="hidden print:block mb-4 border-b-2 border-slate-900 pb-2">
-              <h2 className="text-2xl font-black">{facilityInfo.name} - {year}년 {month}월 개인지원 기록지</h2>
-              <div className="flex justify-between mt-2 font-bold">
-                <span>이용인: {currentP.name}</span>
-                <span>담당: {currentP.teacher}</span>
-              </div>
+            <div className="hidden print:block border-b-2 border-slate-900 pb-2 mb-4">
+               <h2 className="text-xl font-black">{facilityInfo.name} - {year}년 {month}월 개인지원 기록</h2>
+               <p className="text-sm font-bold mt-1">이용인: {currentP.name} / 담당: {currentP.teacher}</p>
             </div>
 
-            {/* 메인 테이블 */}
-            <div className="bg-white rounded-3xl shadow-xl overflow-hidden border">
-              <div className="bg-brand-navy text-white p-5 flex justify-between items-center print:bg-slate-100 print:text-black print:border-b-2 print:border-black">
-                <h3 className="text-lg font-black">{month}월 개인선택활동 체크리스트</h3>
-                <span className="bg-white/20 px-4 py-1 rounded-full text-sm font-bold">{currentP.name} 이용인</span>
-              </div>
+            {/* 메인 테이블 카드 */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col print:shadow-none print:border-slate-800">
+               <div className="bg-brand-navy text-white px-4 py-3.5 flex items-center justify-between print:bg-slate-100 print:text-black">
+                  <h2 className="font-extrabold text-base">{month}월 개인선택활동 체크리스트</h2>
+                  <span className="text-sm bg-white/20 px-3.5 py-1 rounded-full font-black">{currentP.name} 이용인</span>
+               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-center border-collapse">
-                  <thead className="bg-slate-100 text-slate-600 text-sm font-bold border-b print:bg-slate-50">
-                    <tr>
-                      <th className="p-4 w-16">날짜</th>
-                      <th className="p-4 w-16">요일</th>
-                      <th className="p-4 w-24">상태</th>
-                      {PERSONAL_ACTIVITIES.map(act => <th key={act.key} className="p-4">{act.label}</th>)}
-                      <th className="p-4">비고</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {daysInMonth.map(d => {
-                      const dayData = checklistData[selectedParticipantId]?.[monthKey]?.days[d.key] || { status: '등원', personal: {} };
-                      const isAbsent = dayData.status !== '등원';
-                      return (
-                        <tr key={d.key} className={isAbsent ? 'bg-slate-50 text-slate-400' : 'hover:bg-slate-50/50'}>
-                          <td className="p-4 font-bold">{d.day}</td>
-                          <td className="p-4 text-xs font-bold">{d.dayName}</td>
-                          <td className="p-2">
-                            <select 
-                              value={dayData.status} 
-                              onChange={e => updateCell(selectedParticipantId, monthKey, d.key, 'status', e.target.value)}
-                              className="w-full text-xs font-bold p-1 rounded-lg border focus:ring-1 focus:ring-brand-pink outline-none no-print"
-                            >
-                              <option value="등원">등원</option>
-                              <option value="결석">결석</option>
-                              <option value="미지원">미지원</option>
-                            </select>
-                            <span className="hidden print:inline font-bold text-xs">{dayData.status}</span>
-                          </td>
-                          {PERSONAL_ACTIVITIES.map(act => (
-                            <td key={act.key} className="p-2">
-                              <button 
-                                disabled={isAbsent}
-                                onClick={() => updateCell(selectedParticipantId, monthKey, d.key, 'personal', act.key)}
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center mx-auto transition-all ${dayData.personal[act.key] ? 'bg-brand-pink text-white shadow-inner' : 'bg-slate-100 text-transparent hover:bg-slate-200'}`}
-                              >
-                                <IconCheckThin />
-                              </button>
-                            </td>
-                          ))}
-                          <td className="p-2">
-                            <input 
-                              type="text" value={dayData.note || ''} 
-                              onChange={e => updateCell(selectedParticipantId, monthKey, d.key, 'note', e.target.value)}
-                              placeholder="특이사항" className="w-full text-xs p-2 bg-transparent border-b border-transparent focus:border-slate-300 outline-none"
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* 하단 요약 */}
-              <div className="bg-slate-50 p-6 flex flex-wrap gap-4 border-t print:bg-white">
-                <span className="font-black text-brand-navy mr-4">활동 요약:</span>
-                {PERSONAL_ACTIVITIES.map(act => {
-                  const count = daysInMonth.filter(d => checklistData[selectedParticipantId]?.[monthKey]?.days[d.key]?.personal[act.key]).length;
-                  return (
-                    <div key={act.key} className="bg-white px-4 py-2 rounded-2xl border text-sm font-bold shadow-sm">
-                      {act.label}: <span className="text-brand-pink font-black ml-1">{count}회</span>
-                    </div>
-                  );
-                })}
-              </div>
+               <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                       <tr className="bg-slate-100 text-slate-700 border-b font-extrabold text-center h-11 print:bg-slate-50">
+                          <th className="p-2 w-14 border-r">날짜</th>
+                          <th className="p-2 w-12 border-r">요일</th>
+                          <th className="p-2 w-20 border-r">상태</th>
+                          {PERSONAL_ACTIVITIES.map(act => <th key={act.key} className="p-2 border-r min-w-[70px]">{act.label}</th>)}
+                          <th className="p-2">특이사항</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 text-center">
+                       {daysInMonth.map(d => {
+                          const dayData = checklistData[selectedParticipantId]?.[monthKey]?.days[d.key] || { status: '등원', personal: {} };
+                          const isAbsent = dayData.status !== '등원';
+                          return (
+                            <tr key={d.key} className={`${isAbsent ? 'bg-slate-50 text-slate-400' : 'hover:bg-slate-50/50'} h-12`}>
+                               <td className="p-2 font-bold border-r">{d.day}일</td>
+                               <td className={`p-2 font-extrabold text-[10px] border-r ${d.dayName === '토' ? 'text-blue-600' : d.dayName === '일' ? 'text-rose-600' : ''}`}>{d.dayName}</td>
+                               <td className="p-1 border-r text-center">
+                                  <select 
+                                    value={dayData.status} 
+                                    onChange={e => updateCell(selectedParticipantId, monthKey, d.key, 'status', e.target.value)}
+                                    className="no-print text-[10px] font-black rounded-lg px-1.5 py-1 border outline-none"
+                                  >
+                                     <option value="등원">등원</option>
+                                     <option value="결석">결석</option>
+                                     <option value="미지원">미지원</option>
+                                  </select>
+                                  <span className="hidden print:inline font-bold">{dayData.status}</span>
+                               </td>
+                               {PERSONAL_ACTIVITIES.map(act => (
+                                 <td key={act.key} className="p-1 border-r text-center">
+                                    <button 
+                                      disabled={isAbsent}
+                                      onClick={() => updateCell(selectedParticipantId, monthKey, d.key, 'personal', act.key)}
+                                      className={`w-9 h-9 rounded-xl flex items-center justify-center mx-auto border-2 transition-all ${dayData.personal[act.key] ? 'bg-brand-pink border-brand-pink text-white shadow-sm' : 'bg-slate-50 border-slate-100 text-transparent'}`}
+                                    >
+                                       <IconCheckThin />
+                                    </button>
+                                 </td>
+                               ))}
+                               <td className="p-1">
+                                  <input 
+                                    type="text" value={dayData.note || ''} 
+                                    onChange={e => updateCell(selectedParticipantId, monthKey, d.key, 'note', e.target.value)}
+                                    placeholder="특이사항" className="w-full bg-transparent px-2 py-1 text-[11px] outline-none border-b border-transparent focus:border-slate-300"
+                                  />
+                               </td>
+                            </tr>
+                          );
+                       })}
+                    </tbody>
+                  </table>
+               </div>
+               
+               {/* 하단 요약 */}
+               <div className="bg-slate-50 p-4 border-t flex flex-wrap items-center gap-4 text-xs font-bold print:bg-white">
+                  <span className="text-brand-navy">월간 활동 합계:</span>
+                  {PERSONAL_ACTIVITIES.map(act => {
+                     const count = daysInMonth.filter(d => checklistData[selectedParticipantId]?.[monthKey]?.days[d.key]?.personal[act.key]).length;
+                     return (
+                        <div key={act.key} className="bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+                           {act.label}: <span className="text-brand-pink ml-1">{count}회</span>
+                        </div>
+                     );
+                  })}
+               </div>
             </div>
           </main>
 
-          {/* 관리 모달 */}
+          {/* 관리 모달 (이름 수정 기능 추가) */}
           {isMgmtOpen && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh]">
-                <div className="p-6 border-b flex justify-between items-center bg-brand-navy text-white rounded-t-3xl">
-                  <h2 className="text-xl font-black">데이터 및 이름 관리</h2>
-                  <button onClick={() => setIsMgmtOpen(false)}><IconX className="w-6 h-6" /></button>
-                </div>
-                <div className="p-6 overflow-y-auto space-y-8">
-                  {/* 이용인 이름 수정 */}
-                  <section>
-                    <h3 className="font-black text-lg mb-4 text-brand-navy flex items-center gap-2"><IconUsers /> 이용인 이름 수정</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {participants.map(p => (
-                        <div key={p.id} className="flex gap-2">
-                          <input 
-                            type="text" value={p.name} 
-                            onChange={e => updateParticipantName(p.id, e.target.value)}
-                            className="flex-1 border p-2 rounded-xl text-sm font-bold focus:border-brand-pink outline-none"
-                          />
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[85vh] flex flex-col overflow-hidden">
+                  <div className="bg-brand-navy text-white p-4 flex justify-between items-center">
+                     <h2 className="font-bold">시스템 및 이름 관리</h2>
+                     <button onClick={() => setIsMgmtOpen(false)}><IconX /></button>
+                  </div>
+                  <div className="p-5 overflow-y-auto space-y-6">
+                     {/* 계정/선생님 이름 수정 */}
+                     <section className="space-y-3">
+                        <h3 className="text-sm font-black text-brand-navy flex items-center gap-2"><IconSettings /> 관리자 및 선생님 이름 수정</h3>
+                        {accounts.map(acc => (
+                           <div key={acc.code} className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border">
+                              <span className="text-[10px] font-black bg-slate-200 px-2 py-1 rounded w-10 text-center">{acc.code}</span>
+                              <input 
+                                 type="text" value={acc.name} 
+                                 onChange={e => setAccounts(prev => prev.map(a => a.code === acc.code ? { ...a, name: e.target.value } : a))}
+                                 className="flex-1 bg-transparent border-b border-transparent focus:border-brand-pink outline-none font-bold text-xs"
+                              />
+                              <span className="text-[10px] text-slate-400 font-bold uppercase">{acc.role}</span>
+                           </div>
+                        ))}
+                     </section>
+                     {/* 이용인 이름 및 정보 수정 */}
+                     <section className="space-y-3">
+                        <h3 className="text-sm font-black text-brand-navy flex items-center gap-2"><IconUsers /> 이용인 목록 및 성함 수정</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                           {participants.map(p => (
+                              <div key={p.id} className="bg-slate-50 p-2 rounded-xl border flex gap-2 items-center">
+                                 <input 
+                                    type="text" value={p.name} 
+                                    onChange={e => setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, name: e.target.value } : item))}
+                                    className="flex-1 bg-transparent font-bold text-xs border-b border-transparent focus:border-brand-pink outline-none"
+                                 />
+                                 <button onClick={() => handleDeleteParticipant(p.id)} className="text-rose-400 hover:text-rose-600"><IconTrash2 className="w-3.5 h-3.5" /></button>
+                              </div>
+                           ))}
                         </div>
-                      ))}
-                    </div>
-                  </section>
-                  {/* 관리자/선생님 이름 수정 */}
-                  <section>
-                    <h3 className="font-black text-lg mb-4 text-brand-navy flex items-center gap-2"><IconSettings /> 직원/계정 이름 수정</h3>
-                    <div className="space-y-3">
-                      {accounts.map(acc => (
-                        <div key={acc.code} className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border">
-                          <span className="text-xs font-black bg-slate-200 px-2 py-1 rounded text-slate-500 w-12 text-center">{acc.code}</span>
-                          <input 
-                            type="text" value={acc.name} 
-                            onChange={e => updateAccountName(acc.code, e.target.value)}
-                            className="flex-1 border-b bg-transparent p-1 font-bold focus:border-brand-pink outline-none"
-                          />
-                          <span className="text-xs font-bold text-slate-400">{acc.role === 'admin' ? '관리자' : '선생님'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                </div>
-              </div>
+                     </section>
+                  </div>
+                  <div className="p-4 bg-slate-100 text-right">
+                     <button onClick={() => setIsMgmtOpen(false)} className="px-4 py-2 bg-brand-navy text-white rounded-xl font-bold text-xs">저장 후 닫기</button>
+                  </div>
+               </div>
             </div>
           )}
 
-          {/* 통계 모달 */}
+          {/* 통계 모달 (월 선택 및 전체 참여 지수 추가) */}
           {isStatsOpen && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl">
-                <div className="p-6 border-b flex justify-between items-center bg-brand-navy text-white rounded-t-3xl">
-                  <h2 className="text-xl font-black">종합 통계 분석</h2>
-                  <button onClick={() => setIsStatsOpen(false)}><IconX className="w-6 h-6" /></button>
-                </div>
-                <div className="p-8 space-y-8 text-center">
-                  {/* 월 선택 */}
-                  <div className="flex items-center justify-center gap-4 bg-slate-100 p-2 rounded-2xl w-fit mx-auto">
-                    <span className="font-bold text-slate-500 ml-2 text-sm">조회 월 선택:</span>
-                    <select 
-                      value={statsMonth} onChange={e => setStatsMonth(Number(e.target.value))}
-                      className="bg-white font-black px-4 py-2 rounded-xl shadow-sm outline-none text-brand-navy"
-                    >
-                      {Array.from({length:12}, (_,i)=>i+1).map(m => <option key={m} value={m}>{m}월</option>)}
-                    </select>
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+               <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+                  <div className="bg-brand-navy text-white p-6 flex justify-between items-center">
+                     <h2 className="text-lg font-black tracking-tight">상세 데이터 분석</h2>
+                     <button onClick={() => setIsStatsOpen(false)}><IconX className="w-6 h-6" /></button>
                   </div>
+                  <div className="p-8 space-y-8">
+                     {/* 월 선택 필터 */}
+                     <div className="flex items-center justify-center gap-4 bg-slate-50 p-3 rounded-2xl border">
+                        <span className="text-xs font-black text-slate-400">조회 월:</span>
+                        <div className="flex items-center gap-3">
+                           <button onClick={() => setStatsMonth(prev => prev > 1 ? prev - 1 : 12)} className="w-8 h-8 bg-white border rounded-lg font-bold hover:bg-slate-100">〈</button>
+                           <span className="text-2xl font-black text-brand-navy w-16 text-center">{statsMonth}월</span>
+                           <button onClick={() => setStatsMonth(prev => prev < 12 ? prev + 1 : 1)} className="w-8 h-8 bg-white border rounded-lg font-bold hover:bg-slate-100">〉</button>
+                        </div>
+                     </div>
 
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-                      <p className="text-slate-500 font-bold mb-2 text-sm">{currentP.name} 이용인</p>
-                      <h4 className="text-sm font-bold text-slate-400">월간 등원 횟수</h4>
-                      <p className="text-4xl font-black text-brand-navy mt-2">{statsData.attendCount}<span className="text-lg ml-1">회</span></p>
-                    </div>
-                    <div className="bg-brand-pink/5 p-6 rounded-3xl border-2 border-brand-pink/20">
-                      <p className="text-brand-pink font-bold mb-2 text-sm">{facilityInfo.name}</p>
-                      <h4 className="text-sm font-bold text-slate-400">전체 참여 지수 (합산)</h4>
-                      <p className="text-4xl font-black text-brand-pink mt-2">{statsData.totalFacilityAttendance}<span className="text-lg ml-1">회</span></p>
-                    </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-50 p-5 rounded-2xl border text-center">
+                           <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Personal Attend</p>
+                           <h4 className="text-xs font-bold text-slate-500 mb-2">{currentP.name} 등원일수</h4>
+                           <p className="text-4xl font-black text-brand-navy">{statsResult.pAttend}<span className="text-sm ml-1 opacity-40">회</span></p>
+                        </div>
+                        <div className="bg-brand-pink/5 p-5 rounded-2xl border border-brand-pink/20 text-center">
+                           <p className="text-[10px] font-black text-brand-pink/60 uppercase mb-1">Facility Total</p>
+                           <h4 className="text-xs font-bold text-slate-500 mb-2">시설 전체 참여 지수</h4>
+                           <p className="text-4xl font-black text-brand-pink">{statsResult.totalFacilityAttend}<span className="text-sm ml-1 opacity-40">회</span></p>
+                        </div>
+                     </div>
+
+                     <div className="bg-slate-900 text-white p-5 rounded-2xl">
+                        <p className="text-[11px] font-bold leading-relaxed opacity-70">
+                           * 전체 참여 지수는 선택된 {statsMonth}월 한 달 동안 등원한 모든 이용인의 출석 횟수를 합산한 결과입니다.<br/>
+                           (예: 5명의 이용인이 각각 20일 등원 시 100회로 표기됨)
+                        </p>
+                     </div>
+
+                     <button onClick={() => setIsStatsOpen(false)} className="w-full bg-slate-100 p-4 rounded-2xl font-black text-slate-600 hover:bg-slate-200 transition">데이터 확인 완료</button>
                   </div>
-
-                  <div className="text-left bg-slate-900 text-white p-6 rounded-2xl">
-                    <p className="text-xs font-bold text-slate-400 mb-1 leading-relaxed">
-                      * 전체 참여 지수는 해당 월에 등원한 모든 이용인의 출석 횟수를 합산한 결과입니다.<br/>
-                      (예: 이용인 5명이 각각 20일씩 등원한 경우 총 100회로 집계됩니다.)
-                    </p>
-                  </div>
-
-                  <button onClick={() => setIsStatsOpen(false)} className="w-full bg-slate-100 p-4 rounded-2xl font-black hover:bg-slate-200 transition">확인 완료</button>
-                </div>
-              </div>
+               </div>
             </div>
           )}
         </div>
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
     root.render(<App />);
   </script>
 </body>
