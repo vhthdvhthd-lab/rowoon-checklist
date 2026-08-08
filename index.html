@@ -193,18 +193,22 @@ scrollbar-width: none;  /* Firefox */
   .print-card.personal-table th:last-child,
   .print-card.personal-table td:last-child { width: 24mm !important; }
 
-  .print-card table {
-    border: 0.5px solid #555 !important;
-    border-collapse: collapse !important;
-  }
+  /* 인쇄 테이블 */
+.print-card table {
+  width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
 
-  .print-card th,
-  .print-card td {
-    border: 0.5px solid #555 !important;
-    border-color: #555 !important;
-    border-style: solid !important;
-    box-sizing: border-box !important;
-  }
+  /* 테이블 외곽선 */
+  border: 0.5px solid #555 !important;
+}
+
+/* 내부 선 */
+.print-card th,
+.print-card td {
+  border: 0.5px solid #555 !important;
+  box-sizing: border-box !important;
+}
 
   .print-card thead tr {
     height: 9mm !important;
@@ -1367,10 +1371,10 @@ else if (status === '결석') rowBg = 'bg-rose-50/70 dark:bg-rose-950/30';
 else if (status === '미지원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 return (
 <tr key={d.dateKey} className={`${rowBg} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
-<td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black">
+<td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black  print:text-[11px]">
 {d.day}일
 </td>
-<td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black ${
+<td className={`p-2 text-center font-extrabold text-xs border-r border-slate-200 dark:border-slate-700 print:border-black print:text-[11px] ${
 d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ? 'text-rose-600 dark:text-rose-400' : ''
 }`}>
 {d.dayName}
