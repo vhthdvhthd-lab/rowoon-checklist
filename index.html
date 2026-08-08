@@ -193,6 +193,8 @@ scrollbar-width: none;  /* Firefox */
   .print-card.personal-table th:last-child,
   .print-card.personal-table td:last-child { width: 30mm !important; }
 
+  /* 테이블 자체가 유일한 표 외곽선을 담당합니다.
+     셀의 좌우 외곽선을 제거해 겹침으로 인한 굵은 선을 방지합니다. */
   .print-card table {
     border: 0.5px solid #555 !important;
     border-collapse: collapse !important;
@@ -207,11 +209,44 @@ scrollbar-width: none;  /* Firefox */
     box-sizing: border-box !important;
   }
 
-  /* 표 외곽선과 내부선 굵기를 동일하게 유지 */
+  /* 테이블 외곽선과 셀 선이 겹치지 않도록 네 가장자리 셀의
+     바깥쪽 선만 제거합니다. 테이블 border가 외곽선을 담당합니다. */
+  .print-card table tr > :first-child {
+    border-left: 0 !important;
+  }
+
+  .print-card table tr > :last-child {
+    border-right: 0 !important;
+  }
+
+  .print-card table thead tr:first-child > * {
+    border-top: 0 !important;
+  }
+
+  .print-card table tbody tr:last-child > * {
+    border-bottom: 0 !important;
+  }
+
   .print-card table,
   .print-card table th,
   .print-card table td {
     outline: none !important;
+  }
+
+  /* 인쇄 본문: 날짜/요일/상태/비고를 자동합계와 동일한 9px로 통일 */
+  .print-card table tbody td,
+  .print-card table tbody td:nth-child(1),
+  .print-card table tbody td:nth-child(2),
+  .print-card table tbody td:nth-child(3),
+  .print-card table tbody td:last-child,
+  .print-card table tbody td:last-child input,
+  .print-card table tbody td:last-child textarea {
+    font-size: 9px !important;
+  }
+
+  /* 상태 버튼의 글자만 9px로 통일 */
+  .print-card table tbody td:nth-child(3) button {
+    font-size: 9px !important;
   }
 
   .print-card thead tr {
