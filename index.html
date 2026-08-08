@@ -1,3 +1,4 @@
+```
 <!DOCTYPE html>
 <html lang="ko" class="h-full">
 <head>
@@ -36,7 +37,7 @@ scrollbar-width: none;  /* Firefox */
 /* Custom Print Styles */
 @page {
   size: A4 portrait;
-  margin: 15mm 10mm 15mm 10mm;
+  margin: 20mm 10mm 15mm 10mm;
 }
 @media print {
   html, body {
@@ -100,7 +101,8 @@ scrollbar-width: none;  /* Firefox */
 
   th {
     padding: 1.5px 2px !important;
-    font-size: 8px !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
     height: 20px !important;
   }
 
@@ -159,8 +161,7 @@ scrollbar-width: none;  /* Firefox */
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    border-width: 0.5px !important;
-    border-color: #555 !important;
+    border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     overflow: visible !important;
@@ -182,7 +183,7 @@ scrollbar-width: none;  /* Firefox */
   .print-card.personal-table th:nth-child(2),
   .print-card.personal-table td:nth-child(2),
   .print-card.daily-table th:nth-child(2),
-  .print-card.daily-table td:nth-child(2) { width: 8mm !important; }
+  .print-card.daily-table td:nth-child(2) { width: 10mm !important; }
 
   .print-card.personal-table th:nth-child(3),
   .print-card.personal-table td:nth-child(3),
@@ -192,11 +193,17 @@ scrollbar-width: none;  /* Firefox */
   .print-card.personal-table th:last-child,
   .print-card.personal-table td:last-child { width: 24mm !important; }
 
+  .print-card table {
+    border: 0.5px solid #555 !important;
+    border-collapse: collapse !important;
+  }
+
   .print-card th,
   .print-card td {
-    border-width: 0.5px !important;
+    border: 0.5px solid #555 !important;
     border-color: #555 !important;
     border-style: solid !important;
+    box-sizing: border-box !important;
   }
 
   .print-card thead tr {
@@ -1182,15 +1189,15 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 <table className="w-full table-fixed text-left text-xs border-collapse personal-table">
 <thead>
 <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:bg-slate-100 print:border-black">
-<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black">날짜</th>
-<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black">요일</th>
-<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black">상태</th>
+<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">날짜</th>
+<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">요일</th>
+<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">상태</th>
 {PERSONAL_ACTIVITIES.map(act => (
-<th key={act.key} className="p-2 w-[74px] border-r border-slate-200 dark:border-slate-600 text-xs text-center print:border-black">
+<th key={act.key} className="p-2 w-[74px] border-r border-slate-200 dark:border-slate-600 text-xs text-center print:border-black print:text-[10px]">
 {act.label}
 </th>
 ))}
-<th className="p-2 w-[100px] border-l border-slate-200 dark:border-slate-600 print:border-black">비고</th>
+<th className="p-2 w-[100px] border-l border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">비고</th>
 </tr>
 </thead>
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
@@ -1339,9 +1346,9 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 <table className="w-full table-fixed text-left text-xs border-collapse daily-table">
 <thead>
 <tr className="bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600 font-extrabold text-center h-11 print:bg-slate-100 print:border-black">
-<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black">날짜</th>
-<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black">요일</th>
-<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black">상태</th>
+<th className="p-2 w-10 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">날짜</th>
+<th className="p-2 w-9 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">요일</th>
+<th className="p-2 w-16 border-r border-slate-200 dark:border-slate-600 print:border-black print:text-[10px]">상태</th>
 <th className="p-2 border-r border-slate-200 dark:border-slate-600 print:border-black">구강관리 (자립도)</th>
 <th className="p-2">식생활관리 (자립도)</th>
 </tr>
@@ -1952,3 +1959,4 @@ root.render(<App />);
 </script>
 </body>
 </html>
+```
