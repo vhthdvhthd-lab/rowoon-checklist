@@ -1,7 +1,0 @@
-{
-  "name": "rowoon-checklist-shared",
-  "private": true,
-  "dependencies": {
-    "@vercel/blob": "latest"
-  }
-}
