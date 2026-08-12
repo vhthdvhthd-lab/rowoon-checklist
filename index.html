@@ -2145,6 +2145,106 @@ const rootElement = document.getElementById('root');
 const root = ReactDOM.createRoot(rootElement);
 root.render(<App />);
 </script>
+
+<script>
+(function () {
+  const SHARED_KEYS = [
+    'daycare_accounts_v1',
+    'daycare_facility_v1',
+    'daycare_teachers_v1',
+    'daycare_participants_v1',
+    'daycare_checklists_v2'
+  ];
+
+  const originalSetItem = localStorage.setItem.bind(localStorage);
+  const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+  function snapshot() {
+    const data = {};
+    SHARED_KEYS.forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v !== null) data[k] = v;
+    });
+    return data;
+  }
+
+  async function pushShared() {
+    try {
+      await fetch('/api/data', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({data: snapshot()})
+      });
+    } catch (e) {
+      console.warn('공용 저장소 동기화 실패:', e);
+    }
+  }
+
+  localStorage.setItem = function(key, value) {
+    originalSetItem(key, value);
+    if (SHARED_KEYS.includes(key)) {
+      clearTimeout(window.__rowoonSyncTimer);
+      window.__rowoonSyncTimer = setTimeout(pushShared, 250);
+    }
+  };
+
+  localStorage.removeItem = function(key) {
+    originalRemoveItem(key);
+    if (SHARED_KEYS.includes(key)) {
+      clearTimeout(window.__rowoonSyncTimer);
+      window.__rowoonSyncTimer = setTimeout(pushShared, 250);
+    }
+  };
+
+  async function pullShared() {
+    try {
+      const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) return;
+      const result = await r.json();
+      if (!result || !result.data) return;
+
+      Object.entries(result.data).forEach(([key, value]) => {
+        if (SHARED_KEYS.includes(key) && value != null) {
+          originalSetItem(key, value);
+        }
+      });
+
+      // Reload only after the initial pull, so React initializes from shared data.
+      if (!window.__rowoonSharedInitialized) {
+        window.__rowoonSharedInitialized = true;
+        location.reload();
+      }
+    } catch (e) {
+      console.warn('공용 데이터 불러오기 실패:', e);
+    }
+  }
+
+  // Pull shared data before the app gets a chance to render.
+  pullShared();
+
+  // Keep computers in sync while the app is open.
+  setInterval(async () => {
+    try {
+      const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) return;
+      const result = await r.json();
+      if (!result || !result.data) return;
+
+      let changed = false;
+      Object.entries(result.data).forEach(([key, value]) => {
+        if (!SHARED_KEYS.includes(key) || value == null) return;
+        if (localStorage.getItem(key) !== value) {
+          originalSetItem(key, value);
+          changed = true;
+        }
+      });
+
+      if (changed) location.reload();
+    } catch (e) {}
+  }, 5000);
+})();
+</script>
+
 </body>
 </html>      if (remoteChecklists && typeof remoteChecklists === 'object') {
         sharedSkipSaveRef.current.checklists = true;t="UTF-8" />
@@ -4290,5 +4390,105 @@ const rootElement = document.getElementById('root');
 const root = ReactDOM.createRoot(rootElement);
 root.render(<App />);
 </script>
+
+<script>
+(function () {
+  const SHARED_KEYS = [
+    'daycare_accounts_v1',
+    'daycare_facility_v1',
+    'daycare_teachers_v1',
+    'daycare_participants_v1',
+    'daycare_checklists_v2'
+  ];
+
+  const originalSetItem = localStorage.setItem.bind(localStorage);
+  const originalRemoveItem = localStorage.removeItem.bind(localStorage);
+
+  function snapshot() {
+    const data = {};
+    SHARED_KEYS.forEach(k => {
+      const v = localStorage.getItem(k);
+      if (v !== null) data[k] = v;
+    });
+    return data;
+  }
+
+  async function pushShared() {
+    try {
+      await fetch('/api/data', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({data: snapshot()})
+      });
+    } catch (e) {
+      console.warn('공용 저장소 동기화 실패:', e);
+    }
+  }
+
+  localStorage.setItem = function(key, value) {
+    originalSetItem(key, value);
+    if (SHARED_KEYS.includes(key)) {
+      clearTimeout(window.__rowoonSyncTimer);
+      window.__rowoonSyncTimer = setTimeout(pushShared, 250);
+    }
+  };
+
+  localStorage.removeItem = function(key) {
+    originalRemoveItem(key);
+    if (SHARED_KEYS.includes(key)) {
+      clearTimeout(window.__rowoonSyncTimer);
+      window.__rowoonSyncTimer = setTimeout(pushShared, 250);
+    }
+  };
+
+  async function pullShared() {
+    try {
+      const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) return;
+      const result = await r.json();
+      if (!result || !result.data) return;
+
+      Object.entries(result.data).forEach(([key, value]) => {
+        if (SHARED_KEYS.includes(key) && value != null) {
+          originalSetItem(key, value);
+        }
+      });
+
+      // Reload only after the initial pull, so React initializes from shared data.
+      if (!window.__rowoonSharedInitialized) {
+        window.__rowoonSharedInitialized = true;
+        location.reload();
+      }
+    } catch (e) {
+      console.warn('공용 데이터 불러오기 실패:', e);
+    }
+  }
+
+  // Pull shared data before the app gets a chance to render.
+  pullShared();
+
+  // Keep computers in sync while the app is open.
+  setInterval(async () => {
+    try {
+      const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
+      if (!r.ok) return;
+      const result = await r.json();
+      if (!result || !result.data) return;
+
+      let changed = false;
+      Object.entries(result.data).forEach(([key, value]) => {
+        if (!SHARED_KEYS.includes(key) || value == null) return;
+        if (localStorage.getItem(key) !== value) {
+          originalSetItem(key, value);
+          changed = true;
+        }
+      });
+
+      if (changed) location.reload();
+    } catch (e) {}
+  }, 5000);
+})();
+</script>
+
 </body>
 </html>
