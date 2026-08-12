@@ -20,11 +20,11 @@ async function readKey(key) {
     const text = await new Response(blob.stream).text();
     return JSON.parse(text);
   } catch (error) {
-    // 최초 사용 시 아직 Blob 파일이 없으면 null로 처리
     if (
       error?.statusCode === 404 ||
+      error?.status === 404 ||
       error?.code === 'BLOB_NOT_FOUND' ||
-      String(error?.message || '').includes('not found')
+      String(error?.message || '').toLowerCase().includes('not found')
     ) {
       return null;
     }
@@ -36,7 +36,6 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
 
   try {
-    // GET /api/data?key=settings
     if (req.method === 'GET') {
       const key = req.query?.key;
 
@@ -47,12 +46,9 @@ export default async function handler(req, res) {
       }
 
       const data = await readKey(key);
-
       return res.status(200).json(data);
     }
 
-    // PUT /api/data
-    // { "key": "settings", "data": {...} }
     if (req.method === 'PUT') {
       const body = req.body || {};
       const key = body.key;
@@ -75,8 +71,9 @@ export default async function handler(req, res) {
         JSON.stringify(data),
         {
           access: 'private',
+          allowOverwrite: true,
           addRandomSuffix: false,
-          contentType: 'application/json',
+          contentType: 'application/json; charset=utf-8',
           cacheControlMaxAge: 0,
         }
       );
@@ -84,11 +81,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    res.setHeader('Allow', 'GET, PUT');
     return res.status(405).json({
       error: 'Method Not Allowed',
     });
   } catch (error) {
-    console.error(error);
+    console.error('Vercel Blob API error:', error);
 
     return res.status(500).json({
       error: '공용 저장소 처리 중 오류가 발생했습니다.',
