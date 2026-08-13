@@ -1014,6 +1014,7 @@ for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
 if (hideWeekends && (dow === 0 || dow === 6)) continue;
+if (isKRPublicHoliday(dateKey)) continue;
 if (closedDateKeys.has(dateKey)) {
  totalClosed++;
  continue;
@@ -1041,13 +1042,37 @@ let overallAttendanceCount = 0;
 let overallAttendanceCapacity = 0;
 let overallOperatingDays = 0;
 
+
+// 대한민국 관공서 공휴일/대체공휴일 (2026~2030)
+// 주말은 별도로 제외하므로 여기서는 공휴일 날짜만 관리합니다.
+const KR_PUBLIC_HOLIDAYS = new Set([
+  // 2026
+  '2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
+  '2026-05-05','2026-05-24','2026-05-25','2026-06-03','2026-06-06','2026-07-17',
+  '2026-08-15','2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-03','2026-10-05','2026-10-09','2026-12-25',
+  // 2027
+  '2027-01-01','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-03-01','2027-05-05','2027-05-13',
+  '2027-06-06','2027-06-07','2027-07-17','2027-08-15','2027-08-16','2027-09-14','2027-09-15','2027-09-16',
+  '2027-10-03','2027-10-04','2027-10-09','2027-10-11','2027-12-25','2027-12-27',
+  // 2028
+  '2028-01-25','2028-01-26','2028-01-27','2028-03-01','2028-04-12','2028-05-02','2028-05-05',
+  '2028-06-06','2028-07-17','2028-08-15','2028-10-02','2028-10-03','2028-10-04','2028-10-05','2028-10-09','2028-12-25',
+  // 2029
+  '2029-01-01','2029-02-12','2029-02-13','2029-02-14','2029-03-01','2029-05-05','2029-05-07','2029-05-20','2029-05-21',
+  '2029-06-06','2029-07-17','2029-08-15','2029-09-21','2029-09-22','2029-09-23','2029-09-24','2029-10-03','2029-10-09','2029-12-25',
+  // 2030
+  '2030-01-01','2030-02-02','2030-02-03','2030-02-04','2030-02-05','2030-03-01','2030-05-05','2030-05-06',
+  '2030-05-09','2030-06-06','2030-07-17','2030-08-15','2030-09-11','2030-09-12','2030-09-13','2030-10-03','2030-10-09','2030-12-25'
+]);
+const isKRPublicHoliday = (dateKey) => KR_PUBLIC_HOLIDAYS.has(dateKey);
+
 const daysInMonthForStats = (mKey) => {
 const [y, m] = mKey.split('-').map(Number);
 const lastDay = new Date(y, m, 0).getDate();
 let count = 0;
 for (let d = 1; d <= lastDay; d++) {
 const dow = new Date(y, m - 1, d).getDay();
-if (dow !== 0 && dow !== 6) count++;
+if (dow !== 0 && dow !== 6 && !isKRPublicHoliday(`${mKey}-${String(d).padStart(2, '0')}`)) count++;
 }
 return count;
 };
@@ -1081,7 +1106,7 @@ const closedDateKeys = getClosedDateKeys(mKey);
 for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow === 0 || dow === 6 || closedDateKeys.has(dateKey)) continue;
+if (dow === 0 || dow === 6 || isKRPublicHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
 personOperatingDays++;
 const d = days[dateKey] || {};
 const status = d.dailyStatus || d.status || '등원';
@@ -1134,7 +1159,7 @@ let att = 0, unsupported = 0, absent = 0, tot = 0, pTot = 0;
 for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow === 0 || dow === 6 || closedDateKeys.has(dateKey)) continue;
+if (dow === 0 || dow === 6 || isKRPublicHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
 tot++;
 const d = days[dateKey] || {};
 const status = d.dailyStatus || d.status || '등원';
@@ -1774,12 +1799,9 @@ option === status ? 'bg-slate-100 dark:bg-slate-700' : ''
 {['상', '중', '하'].map(lvl => (
 <button
 key={lvl}
-disabled={isInactive}
 onClick={() => handleOralChange(d.dateKey, lvl)}
 className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none ${
-isInactive
-? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
-: oral === lvl
+oral === lvl
   ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:bg-[#192755] print:text-white print:border-[#192755] print:font-extrabold print:opacity-100'
 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-[#192755] hover:bg-slate-200 dark:hover:bg-slate-600 print:bg-white print:text-slate-400 print:border-slate-300 print:opacity-100'
 }`}
@@ -1794,12 +1816,9 @@ isInactive
 {['상', '중', '하'].map(lvl => (
 <button
 key={lvl}
-disabled={isInactive}
 onClick={() => handleMealChange(d.dateKey, lvl)}
 className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none ${
-isInactive
-? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
-: meal === lvl
+meal === lvl
 ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:bg-[#192755] print:text-white print:border-[#192755] print:font-extrabold print:opacity-100'
 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-[#192755] hover:bg-slate-200 dark:hover:bg-slate-600 print:bg-white print:text-slate-400 print:border-slate-300 print:opacity-100'
 }`}
