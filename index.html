@@ -1917,14 +1917,16 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 {monthDays.map((d, dayIndex) => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
 const status = dayData.dailyStatus ?? dayData.status ?? '등원';
+const holidayName = getKoreanHolidayName(d.dateKey);
+const displayStatus = holidayName ? '휴원' : status;
 const oral = dayData.oral || '';
 const meal = dayData.meal || '';
-const isInactive = status === '결석' || status === '미지원' || status === '휴원';
+const isInactive = !!holidayName || status === '결석' || status === '미지원' || status === '휴원';
 let rowBg = '';
 if (d.isToday) rowBg = 'bg-sky-50/90 dark:bg-sky-950/40';
 else if (d.isWeekend) rowBg = 'bg-slate-100/70 dark:bg-slate-900/40';
 else if (status === '결석') rowBg = 'bg-rose-50/70 dark:bg-rose-950/30';
-else if (status === '미지원' || status === '휴원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
+else if (holidayName || status === '미지원' || status === '휴원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 return (
 <tr key={d.dateKey} className={`${rowBg} ${d.isToday ? "print-today-row" : ""} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
 <td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black">
@@ -1938,10 +1940,11 @@ d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ?
 <td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black relative">
 <button
 type="button"
-onClick={() => setOpenStatusDate(openStatusDate === d.dateKey ? null : d.dateKey)}
+disabled={!!holidayName}
+onClick={() => !holidayName && setOpenStatusDate(openStatusDate === d.dateKey ? null : d.dateKey)}
 aria-label={`${d.day}일 출석 상태 선택`}
-className={`text-[11px] font-black rounded-md px-2 py-1 border cursor-pointer transition ${
-status === '등원'
+className={`text-[11px] font-black rounded-md px-2 py-1 border transition ${holidayName ? 'cursor-default' : 'cursor-pointer'} ${
+displayStatus === '등원'
 ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
 : status === '결석'
 ? 'bg-rose-100 text-rose-800 border-rose-300'
@@ -1950,9 +1953,9 @@ status === '등원'
 : 'bg-slate-200 text-slate-700 border-slate-300'
 }`}
 >
-{status}
+{displayStatus}
 </button>
-{openStatusDate === d.dateKey && (
+{openStatusDate === d.dateKey && !holidayName && (
 <div className={`absolute z-40 left-1/2 -translate-x-1/2 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print ${dayIndex >= monthDays.length - 3 ? "bottom-full mb-1" : "top-full mt-1"}`}>
 {['등원', '결석', '미지원', '휴원'].map(option => (
 <button
@@ -1972,6 +1975,14 @@ option === status ? 'bg-slate-100 dark:bg-slate-700' : ''
 </div>
 )}
 </td>
+{holidayName ? (
+<td colSpan={2} className="p-2 text-center border-r border-slate-200 dark:border-slate-700 print:border-black">
+<div className="w-full flex items-center justify-center min-h-[38px] px-3 font-black text-sm text-slate-700 dark:text-slate-200 print:text-black print:text-[11px]">
+{holidayName}
+</div>
+</td>
+) : (
+<>
 <td className="p-2 border-r border-slate-200 dark:border-slate-700 print:border-black">
 <div className="flex items-center justify-center gap-2.5">
 {['상', '중', '하'].map(lvl => (
@@ -2012,6 +2023,8 @@ isInactive
 ))}
 </div>
 </td>
+</>
+)}
 </tr>
 );
 })}
