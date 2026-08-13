@@ -487,6 +487,122 @@ const PERSONAL_ACTIVITIES = [
 { key: 'creation', label: '창작활동' },
 { key: 'other', label: '기타' }
 ];
+// 대한민국 법정공휴일·대체공휴일 (2026~2030)
+// 주말과 겹치는 공휴일은 운영일수에서 중복 차감하지 않습니다.
+const KOREAN_HOLIDAYS = new Set([
+  // 2026
+  '2026-01-01',
+  '2026-02-16','2026-02-17','2026-02-18',
+  '2026-03-01','2026-03-02',
+  '2026-05-05','2026-05-24','2026-05-25',
+  '2026-06-03','2026-06-06',
+  '2026-07-17',
+  '2026-08-15','2026-08-17',
+  '2026-09-24','2026-09-25','2026-09-26',
+  '2026-10-03','2026-10-05','2026-10-09',
+  '2026-12-25',
+
+  // 2027
+  '2027-01-01',
+  '2027-02-07','2027-02-08','2027-02-09',
+  '2027-03-01',
+  '2027-05-03','2027-05-05','2027-05-13',
+  '2027-06-06',
+  '2027-07-17','2027-07-19',
+  '2027-08-15','2027-08-16',
+  '2027-09-14','2027-09-15','2027-09-16',
+  '2027-10-03','2027-10-04','2027-10-09','2027-10-11',
+  '2027-12-25','2027-12-27',
+
+  // 2028
+  '2028-01-01',
+  '2028-01-25','2028-01-26','2028-01-27',
+  '2028-03-01',
+  '2028-04-12',
+  '2028-05-02','2028-05-05',
+  '2028-06-06',
+  '2028-07-17',
+  '2028-08-15',
+  '2028-10-02','2028-10-03','2028-10-04','2028-10-05',
+  '2028-10-09',
+  '2028-12-25',
+
+  // 2029
+  '2029-01-01',
+  '2029-02-12','2029-02-13','2029-02-14',
+  '2029-03-01',
+  '2029-05-05','2029-05-07','2029-05-20','2029-05-21',
+  '2029-06-06',
+  '2029-07-17',
+  '2029-08-15',
+  '2029-09-21','2029-09-22','2029-09-23','2029-09-24',
+  '2029-10-03','2029-10-09',
+  '2029-12-25',
+
+  // 2030
+  '2030-01-01',
+  '2030-02-02','2030-02-03','2030-02-04','2030-02-05',
+  '2030-03-01',
+  '2030-05-05','2030-05-06','2030-05-09',
+  '2030-06-05','2030-06-06',
+  '2030-07-17',
+  '2030-08-15',
+  '2030-09-11','2030-09-12','2030-09-13',
+  '2030-10-03','2030-10-09',
+  '2030-12-25'
+]);
+
+const isKoreanHoliday = (dateKey) => KOREAN_HOLIDAYS.has(dateKey);
+
+// 공휴일 표시용 명칭. 운영일수 계산에 사용하는 날짜와 동일한 날짜를 사용합니다.
+const KOREAN_HOLIDAY_NAMES = {
+  // 2026
+  '2026-01-01': '신정',
+  '2026-02-16': '설날 연휴', '2026-02-17': '설날', '2026-02-18': '설날 연휴',
+  '2026-03-01': '3·1절', '2026-03-02': '3·1절 대체공휴일',
+  '2026-05-05': '어린이날', '2026-05-24': '부처님오신날', '2026-05-25': '부처님오신날 대체공휴일',
+  '2026-06-03': '전국동시지방선거', '2026-06-06': '현충일',
+  '2026-07-17': '제헌절',
+  '2026-08-15': '광복절', '2026-08-17': '광복절 대체공휴일',
+  '2026-09-24': '추석 연휴', '2026-09-25': '추석', '2026-09-26': '추석 연휴',
+  '2026-10-03': '개천절', '2026-10-05': '개천절 대체공휴일', '2026-10-09': '한글날',
+  '2026-12-25': '기독탄신일',
+  // 2027
+  '2027-01-01': '신정',
+  '2027-02-07': '설날 연휴', '2027-02-08': '설날 연휴', '2027-02-09': '설날 대체공휴일',
+  '2027-03-01': '3·1절',
+  '2027-05-03': '근로자의 날 대체공휴일', '2027-05-05': '어린이날', '2027-05-13': '부처님오신날',
+  '2027-06-06': '현충일', '2027-07-17': '제헌절', '2027-07-19': '제헌절 대체공휴일',
+  '2027-08-15': '광복절', '2027-08-16': '광복절 대체공휴일',
+  '2027-09-14': '추석 연휴', '2027-09-15': '추석', '2027-09-16': '추석 연휴',
+  '2027-10-03': '개천절', '2027-10-04': '개천절 대체공휴일', '2027-10-09': '한글날', '2027-10-11': '한글날 대체공휴일',
+  '2027-12-25': '기독탄신일', '2027-12-27': '기독탄신일 대체공휴일',
+  // 2028
+  '2028-01-01': '신정',
+  '2028-01-25': '설날 연휴', '2028-01-26': '설날', '2028-01-27': '설날 연휴',
+  '2028-03-01': '3·1절', '2028-04-12': '국회의원선거일',
+  '2028-05-02': '부처님오신날', '2028-05-05': '어린이날', '2028-06-06': '현충일',
+  '2028-07-17': '제헌절', '2028-08-15': '광복절',
+  '2028-10-02': '추석 연휴', '2028-10-03': '개천절', '2028-10-04': '추석 연휴', '2028-10-05': '추석 대체공휴일',
+  '2028-10-09': '한글날', '2028-12-25': '기독탄신일',
+  // 2029
+  '2029-01-01': '신정',
+  '2029-02-12': '설날 연휴', '2029-02-13': '설날', '2029-02-14': '설날 연휴',
+  '2029-03-01': '3·1절', '2029-05-05': '어린이날', '2029-05-07': '어린이날 대체공휴일',
+  '2029-05-20': '부처님오신날', '2029-05-21': '부처님오신날 대체공휴일', '2029-06-06': '현충일',
+  '2029-07-17': '제헌절', '2029-08-15': '광복절',
+  '2029-09-21': '추석 연휴', '2029-09-22': '추석', '2029-09-23': '추석 연휴', '2029-09-24': '추석 대체공휴일',
+  '2029-10-03': '개천절', '2029-10-09': '한글날', '2029-12-25': '기독탄신일',
+  // 2030
+  '2030-01-01': '신정',
+  '2030-02-02': '설날 연휴', '2030-02-03': '설날', '2030-02-04': '설날 연휴', '2030-02-05': '설날 대체공휴일',
+  '2030-03-01': '3·1절', '2030-05-05': '어린이날', '2030-05-06': '어린이날 대체공휴일', '2030-05-09': '부처님오신날',
+  '2030-06-05': '전국동시지방선거', '2030-06-06': '현충일', '2030-07-17': '제헌절', '2030-08-15': '광복절',
+  '2030-09-11': '추석 연휴', '2030-09-12': '추석', '2030-09-13': '추석 연휴',
+  '2030-10-03': '개천절', '2030-10-09': '한글날', '2030-12-25': '기독탄신일'
+};
+const getKoreanHolidayName = (dateKey) => KOREAN_HOLIDAY_NAMES[dateKey] || '';
+
 function App() {
 const [accounts, setAccounts] = useState(() => {
 const saved = localStorage.getItem('daycare_accounts');
@@ -1005,72 +1121,7 @@ targetKeys = targetKeys.filter(k => k === monthKey);
 } else if (statsScope === 'year') {
 targetKeys = targetKeys.filter(k => k.startsWith(`${year}-`));
 }
-// 대한민국 법정공휴일·대체공휴일 (2026~2030)
-// 주말과 겹치는 공휴일은 운영일수에서 중복 차감하지 않습니다.
-const KOREAN_HOLIDAYS = new Set([
-  // 2026
-  '2026-01-01',
-  '2026-02-16','2026-02-17','2026-02-18',
-  '2026-03-01','2026-03-02',
-  '2026-05-05','2026-05-24','2026-05-25',
-  '2026-06-03','2026-06-06',
-  '2026-07-17',
-  '2026-08-15','2026-08-17',
-  '2026-09-24','2026-09-25','2026-09-26',
-  '2026-10-03','2026-10-05','2026-10-09',
-  '2026-12-25',
 
-  // 2027
-  '2027-01-01',
-  '2027-02-07','2027-02-08','2027-02-09',
-  '2027-03-01',
-  '2027-05-03','2027-05-05','2027-05-13',
-  '2027-06-06',
-  '2027-07-17','2027-07-19',
-  '2027-08-15','2027-08-16',
-  '2027-09-14','2027-09-15','2027-09-16',
-  '2027-10-03','2027-10-04','2027-10-09','2027-10-11',
-  '2027-12-25','2027-12-27',
-
-  // 2028
-  '2028-01-01',
-  '2028-01-25','2028-01-26','2028-01-27',
-  '2028-03-01',
-  '2028-04-12',
-  '2028-05-02','2028-05-05',
-  '2028-06-06',
-  '2028-07-17',
-  '2028-08-15',
-  '2028-10-02','2028-10-03','2028-10-04','2028-10-05',
-  '2028-10-09',
-  '2028-12-25',
-
-  // 2029
-  '2029-01-01',
-  '2029-02-12','2029-02-13','2029-02-14',
-  '2029-03-01',
-  '2029-05-05','2029-05-07','2029-05-20','2029-05-21',
-  '2029-06-06',
-  '2029-07-17',
-  '2029-08-15',
-  '2029-09-21','2029-09-22','2029-09-23','2029-09-24',
-  '2029-10-03','2029-10-09',
-  '2029-12-25',
-
-  // 2030
-  '2030-01-01',
-  '2030-02-02','2030-02-03','2030-02-04','2030-02-05',
-  '2030-03-01',
-  '2030-05-05','2030-05-06','2030-05-09',
-  '2030-06-05','2030-06-06',
-  '2030-07-17',
-  '2030-08-15',
-  '2030-09-11','2030-09-12','2030-09-13',
-  '2030-10-03','2030-10-09',
-  '2030-12-25'
-]);
-
-const isKoreanHoliday = (dateKey) => KOREAN_HOLIDAYS.has(dateKey);
 
 let totalAttendance = 0;
 let totalAbsent = 0;
@@ -1678,14 +1729,16 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 {monthDays.map(d => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
 const status = dayData.status || '등원';
+const holidayName = getKoreanHolidayName(d.dateKey);
+const displayStatus = holidayName ? '휴원' : status;
 const personal = dayData.personal || {};
 const note = dayData.personalNote || '';
-const isInactive = status === '결석' || status === '미지원' || status === '휴원';
+const isInactive = !!holidayName || status === '결석' || status === '미지원' || status === '휴원';
 let rowBg = '';
 if (d.isToday) rowBg = 'bg-sky-50/90 dark:bg-sky-950/40';
 else if (d.isWeekend) rowBg = 'bg-slate-100/70 dark:bg-slate-900/40';
 else if (status === '결석') rowBg = 'bg-rose-50/70 dark:bg-rose-950/30';
-else if (status === '미지원' || status === '휴원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
+else if (holidayName || status === '미지원' || status === '휴원') rowBg = 'bg-slate-100/60 dark:bg-slate-800/50';
 return (
 <tr key={d.dateKey} className={`${rowBg} ${d.isToday ? "print-today-row" : ""} hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition h-12`}>
 <td className="p-2 text-center font-bold text-sm border-r border-slate-200 dark:border-slate-700 print:border-black print:text-[11px]">
@@ -1699,21 +1752,21 @@ d.dayName === '토' ? 'text-blue-600 dark:text-blue-400' : d.dayName === '일' ?
 <td className="p-1 border-r border-slate-200 dark:border-slate-700 text-center print:border-black relative">
 <button
 type="button"
-onClick={() => setOpenStatusDate(openStatusDate === d.dateKey ? null : d.dateKey)}
+onClick={() => !holidayName && setOpenStatusDate(openStatusDate === d.dateKey ? null : d.dateKey)}
 aria-label={`${d.day}일 출석 상태 선택`}
-className={`text-[11px] font-black rounded-md px-2 py-1 border cursor-pointer transition ${
-status === '등원'
+className={`text-[11px] font-black rounded-md px-2 py-1 border transition ${holidayName ? 'cursor-default' : 'cursor-pointer'} ${
+displayStatus === '등원'
 ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-: status === '결석'
+: displayStatus === '결석'
 ? 'bg-rose-100 text-rose-800 border-rose-300'
-: status === '미지원' || status === '휴원'
+: displayStatus === '미지원' || displayStatus === '휴원'
 ? 'bg-slate-200 text-slate-700 border-slate-300'
 : 'bg-slate-200 text-slate-700 border-slate-300'
 }`}
 >
-{status}
+{displayStatus}
 </button>
-{openStatusDate === d.dateKey && (
+{!holidayName && openStatusDate === d.dateKey && (
 <div className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-1 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print">
 {['등원', '결석', '미지원', '휴원'].map(option => (
 <button
@@ -1733,16 +1786,25 @@ option === status ? 'bg-slate-100 dark:bg-slate-700' : ''
 </div>
 )}
 </td>
-{PERSONAL_ACTIVITIES.map(act => {
+{holidayName ? (
+<td
+colSpan={PERSONAL_ACTIVITIES.length}
+className="p-2 text-center border-r border-slate-200 dark:border-slate-700 print:border-black bg-slate-50 dark:bg-slate-900/40"
+>
+<span className="block w-full font-black text-sm text-slate-700 dark:text-slate-200 print:text-[11px] print:font-extrabold">
+{holidayName}
+</span>
+</td>
+) : PERSONAL_ACTIVITIES.map(act => {
 const isChecked = !!personal[act.key];
 return (
 <td key={act.key} className="p-1 text-center border-r border-slate-200 dark:border-slate-700 print:border-black">
 <button
-type="button"
-disabled={isInactive}
-onClick={() => handlePersonalToggle(d.dateKey, act.key)}
-aria-label={`${act.label} ${isChecked ? '선택됨' : '선택 안 됨'}`}
-className={`w-6 h-6 rounded-md font-bold text-xs transition-all flex items-center justify-center mx-auto border cursor-pointer ${
+ type="button"
+ disabled={isInactive}
+ onClick={() => handlePersonalToggle(d.dateKey, act.key)}
+ aria-label={`${act.label} ${isChecked ? '선택됨' : '선택 안 됨'}`}
+ className={`w-6 h-6 rounded-md font-bold text-xs transition-all flex items-center justify-center mx-auto border cursor-pointer ${
 isInactive
 ? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
 : isChecked
