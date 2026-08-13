@@ -792,17 +792,16 @@ personal: {
 };
 });
 };
-const handleStatusChange = (dateKey, status, section = 'personal') => {
+const handleStatusChange = (dateKey, status) => {
 updateChecklist(prev => {
 const dayObj = prev.days[dateKey] || { status: '등원', personal: {}, oral: '', meal: '', personalNote: '' };
-const statusKey = section === 'daily' ? 'dailyStatus' : 'personalStatus';
 return {
 ...prev,
 days: {
 ...prev.days,
 [dateKey]: {
 ...dayObj,
-[statusKey]: status
+status
 }
 }
 };
@@ -974,8 +973,7 @@ const isTodayChecked = (pId) => {
 const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 const pRecord = checklistData[pId]?.[monthKey]?.days?.[todayKey];
 if (!pRecord) return false;
-const todayStatus = pRecord.dailyStatus || pRecord.status || '등원';
-if (todayStatus === '결석' || todayStatus === '미지원' || todayStatus === '휴원') return true;
+if (pRecord.status === '결석' || pRecord.status === '미지원' || pRecord.status === '휴원') return true;
 return Object.values(pRecord.personal || {}).some(Boolean) || !!pRecord.oral || !!pRecord.meal;
 };
 const handlePrint = () => {
@@ -1004,7 +1002,7 @@ const closedDateKeys = new Set();
 participants.forEach(p => {
 const pDays = checklistData[p.id]?.[mKey]?.days || {};
 Object.entries(pDays).forEach(([dateKey, record]) => {
-if ((record.dailyStatus || record.status || '등원') !== '휴원') return;
+if (record.status !== '휴원') return;
 const [cy, cm, cd] = dateKey.split('-').map(Number);
 const cdow = new Date(cy, cm - 1, cd).getDay();
 if (cdow !== 0 && cdow !== 6) closedDateKeys.add(dateKey);
@@ -1014,13 +1012,12 @@ for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
 if (hideWeekends && (dow === 0 || dow === 6)) continue;
-if (isKRPublicHoliday(dateKey)) continue;
 if (closedDateKeys.has(dateKey)) {
  totalClosed++;
  continue;
 }
 const d = days[dateKey] || {};
-const status = d.dailyStatus || d.status || '등원';
+const status = d.status || '등원';
 if (status === '등원') totalAttendance++;
 else if (status === '결석') totalAbsent++;
 else if (status === '미지원') totalUnsupported++;
@@ -1042,37 +1039,13 @@ let overallAttendanceCount = 0;
 let overallAttendanceCapacity = 0;
 let overallOperatingDays = 0;
 
-
-// 대한민국 관공서 공휴일/대체공휴일 (2026~2030)
-// 주말은 별도로 제외하므로 여기서는 공휴일 날짜만 관리합니다.
-const KR_PUBLIC_HOLIDAYS = new Set([
-  // 2026
-  '2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
-  '2026-05-05','2026-05-24','2026-05-25','2026-06-03','2026-06-06','2026-07-17',
-  '2026-08-15','2026-08-17','2026-09-24','2026-09-25','2026-09-26','2026-10-03','2026-10-05','2026-10-09','2026-12-25',
-  // 2027
-  '2027-01-01','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-03-01','2027-05-05','2027-05-13',
-  '2027-06-06','2027-06-07','2027-07-17','2027-08-15','2027-08-16','2027-09-14','2027-09-15','2027-09-16',
-  '2027-10-03','2027-10-04','2027-10-09','2027-10-11','2027-12-25','2027-12-27',
-  // 2028
-  '2028-01-25','2028-01-26','2028-01-27','2028-03-01','2028-04-12','2028-05-02','2028-05-05',
-  '2028-06-06','2028-07-17','2028-08-15','2028-10-02','2028-10-03','2028-10-04','2028-10-05','2028-10-09','2028-12-25',
-  // 2029
-  '2029-01-01','2029-02-12','2029-02-13','2029-02-14','2029-03-01','2029-05-05','2029-05-07','2029-05-20','2029-05-21',
-  '2029-06-06','2029-07-17','2029-08-15','2029-09-21','2029-09-22','2029-09-23','2029-09-24','2029-10-03','2029-10-09','2029-12-25',
-  // 2030
-  '2030-01-01','2030-02-02','2030-02-03','2030-02-04','2030-02-05','2030-03-01','2030-05-05','2030-05-06',
-  '2030-05-09','2030-06-06','2030-07-17','2030-08-15','2030-09-11','2030-09-12','2030-09-13','2030-10-03','2030-10-09','2030-12-25'
-]);
-const isKRPublicHoliday = (dateKey) => KR_PUBLIC_HOLIDAYS.has(dateKey);
-
 const daysInMonthForStats = (mKey) => {
 const [y, m] = mKey.split('-').map(Number);
 const lastDay = new Date(y, m, 0).getDate();
 let count = 0;
 for (let d = 1; d <= lastDay; d++) {
 const dow = new Date(y, m - 1, d).getDay();
-if (dow !== 0 && dow !== 6 && !isKRPublicHoliday(`${mKey}-${String(d).padStart(2, '0')}`)) count++;
+if (dow !== 0 && dow !== 6) count++;
 }
 return count;
 };
@@ -1081,7 +1054,7 @@ const closedDateKeys = new Set();
 participants.forEach(p => {
 const days = checklistData[p.id]?.[mKey]?.days || {};
 Object.entries(days).forEach(([dateKey, d]) => {
-if ((d.dailyStatus || d.status || '등원') !== '휴원') return;
+if (d.status !== '휴원') return;
 const [yy, mm, dd] = dateKey.split('-').map(Number);
 const dow = new Date(yy, mm - 1, dd).getDay();
 if (dow !== 0 && dow !== 6) closedDateKeys.add(dateKey);
@@ -1106,29 +1079,27 @@ const closedDateKeys = getClosedDateKeys(mKey);
 for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow === 0 || dow === 6 || isKRPublicHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
+if (dow === 0 || dow === 6 || closedDateKeys.has(dateKey)) continue;
 personOperatingDays++;
 const d = days[dateKey] || {};
-const status = d.dailyStatus || d.status || '등원';
+const status = d.status || '등원';
 if (status === '등원') attendance++;
 else if (status === '결석') absent++;
 else if (status === '미지원') unsupported++;
 else if (status === '휴원') closed++;
 }
 });
-const actualAttendance = attendance + unsupported;
-const denominator = actualAttendance + absent;
+const denominator = attendance + absent + unsupported;
 return {
 id: p.id,
 name: p.name,
 teacher: p.teacher,
-attendance: actualAttendance,
-rawAttendance: attendance,
+attendance,
 absent,
 unsupported,
 closed,
 operatingDays: personOperatingDays,
-rate: denominator > 0 ? Math.round((actualAttendance / denominator) * 100) : 0
+rate: denominator > 0 ? Math.round(((attendance + unsupported) / denominator) * 100) : 0
 };
 });
 
@@ -1159,10 +1130,10 @@ let att = 0, unsupported = 0, absent = 0, tot = 0, pTot = 0;
 for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow === 0 || dow === 6 || isKRPublicHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
+if (dow === 0 || dow === 6 || closedDateKeys.has(dateKey)) continue;
 tot++;
 const d = days[dateKey] || {};
-const status = d.dailyStatus || d.status || '등원';
+const status = d.status || '등원';
 if (status === '등원') att++;
 else if (status === '미지원') unsupported++;
 else if (status === '결석') absent++;
@@ -1583,7 +1554,7 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
 {monthDays.map(d => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
-const status = dayData.personalStatus || dayData.status || '등원';
+const status = dayData.status || '등원';
 const personal = dayData.personal || {};
 const note = dayData.personalNote || '';
 const isInactive = status === '결석' || status === '미지원' || status === '휴원';
@@ -1626,7 +1597,7 @@ status === '등원'
 key={option}
 type="button"
 onClick={() => {
-handleStatusChange(d.dateKey, option, 'personal');
+handleStatusChange(d.dateKey, option);
 setOpenStatusDate(null);
 }}
 className={`block w-full px-2 py-1.5 text-[10px] font-black text-center hover:bg-slate-100 dark:hover:bg-slate-700 ${
@@ -1738,7 +1709,7 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
 {monthDays.map(d => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
-const status = dayData.dailyStatus || dayData.status || '등원';
+const status = dayData.status || '등원';
 const oral = dayData.oral || '';
 const meal = dayData.meal || '';
 const isInactive = status === '결석' || status === '미지원' || status === '휴원';
@@ -1781,7 +1752,7 @@ status === '등원'
 key={option}
 type="button"
 onClick={() => {
-handleStatusChange(d.dateKey, option, 'daily');
+handleStatusChange(d.dateKey, option);
 setOpenStatusDate(null);
 }}
 className={`block w-full px-2 py-1.5 text-[10px] font-black text-center hover:bg-slate-100 dark:hover:bg-slate-700 ${
@@ -1799,9 +1770,12 @@ option === status ? 'bg-slate-100 dark:bg-slate-700' : ''
 {['상', '중', '하'].map(lvl => (
 <button
 key={lvl}
+disabled={isInactive}
 onClick={() => handleOralChange(d.dateKey, lvl)}
 className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none ${
-oral === lvl
+isInactive
+? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
+: oral === lvl
   ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:bg-[#192755] print:text-white print:border-[#192755] print:font-extrabold print:opacity-100'
 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-[#192755] hover:bg-slate-200 dark:hover:bg-slate-600 print:bg-white print:text-slate-400 print:border-slate-300 print:opacity-100'
 }`}
@@ -1816,9 +1790,12 @@ oral === lvl
 {['상', '중', '하'].map(lvl => (
 <button
 key={lvl}
+disabled={isInactive}
 onClick={() => handleMealChange(d.dateKey, lvl)}
 className={`min-w-[42px] px-3.5 py-1.5 rounded-xl font-black transition-all text-xs border-2 cursor-pointer print:border-none ${
-meal === lvl
+isInactive
+? 'opacity-20 cursor-not-allowed bg-slate-200 border-slate-200 text-slate-400'
+: meal === lvl
 ? 'bg-[#192755] text-white border-[#192755] shadow-md scale-105 ring-2 ring-sky-300/40 print:bg-[#192755] print:text-white print:border-[#192755] print:font-extrabold print:opacity-100'
 : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-[#192755] hover:bg-slate-200 dark:hover:bg-slate-600 print:bg-white print:text-slate-400 print:border-slate-300 print:opacity-100'
 }`}
@@ -2167,11 +2144,16 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 </div>
 </div>
 <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 text-xs">
-<div className="space-y-2.5">
-<div className="text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-200 px-1">
-{year}년 {month}월 운영일수(주말·휴원 제외): <span className="text-[#192755] dark:text-sky-300">{extendedStats.overallOperatingDays}일</span>
+<div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+<div className="bg-indigo-50 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-800 text-center">
+<span className="text-[11px] text-indigo-700 dark:text-indigo-400 block font-semibold mb-0.5">{year}년 {month}월 운영일수</span>
+<span className="text-2xl font-black text-indigo-700 dark:text-indigo-300">
+{statsScope === 'month' ? extendedStats.overallOperatingDays : extendedStats.overallOperatingDays}일
+</span>
+<span className="text-[10px] text-indigo-600/80 block mt-0.5 font-medium">
+주말·휴원 제외
+</span>
 </div>
-<div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
 <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center">
 <span className="text-[11px] text-emerald-700 dark:text-emerald-400 block font-semibold mb-0.5">등원율</span>
 <span className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
@@ -2218,7 +2200,6 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 <span className="text-[10px] text-amber-600/80 block mt-0.5 font-medium">
 기록 데이터 기반
 </span>
-</div>
 </div>
 </div>
 <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
