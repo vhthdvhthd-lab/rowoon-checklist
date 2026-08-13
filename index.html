@@ -807,6 +807,24 @@ status
 };
 });
 };
+
+// 일상생활지원 상태는 개인선택활동 상태를 기본값으로 사용하되,
+// 일상생활지원에서 직접 변경하면 dailyStatus로 별도 저장합니다.
+const handleDailyStatusChange = (dateKey, status) => {
+updateChecklist(prev => {
+const dayObj = prev.days[dateKey] || { status: '등원', personal: {}, oral: '', meal: '', personalNote: '' };
+return {
+...prev,
+days: {
+...prev.days,
+[dateKey]: {
+...dayObj,
+dailyStatus: status
+}
+}
+};
+});
+};
 const handleOralChange = (dateKey, val) => {
 updateChecklist(prev => {
 const dayObj = prev.days[dateKey] || { status: '등원', personal: {}, oral: '', meal: '', personalNote: '' };
@@ -987,6 +1005,73 @@ targetKeys = targetKeys.filter(k => k === monthKey);
 } else if (statsScope === 'year') {
 targetKeys = targetKeys.filter(k => k.startsWith(`${year}-`));
 }
+// 대한민국 법정공휴일·대체공휴일 (2026~2030)
+// 주말과 겹치는 공휴일은 운영일수에서 중복 차감하지 않습니다.
+const KOREAN_HOLIDAYS = new Set([
+  // 2026
+  '2026-01-01',
+  '2026-02-16','2026-02-17','2026-02-18',
+  '2026-03-01','2026-03-02',
+  '2026-05-05','2026-05-24','2026-05-25',
+  '2026-06-03','2026-06-06',
+  '2026-07-17',
+  '2026-08-15','2026-08-17',
+  '2026-09-24','2026-09-25','2026-09-26',
+  '2026-10-03','2026-10-05','2026-10-09',
+  '2026-12-25',
+
+  // 2027
+  '2027-01-01',
+  '2027-02-07','2027-02-08','2027-02-09',
+  '2027-03-01',
+  '2027-05-03','2027-05-05','2027-05-13',
+  '2027-06-06',
+  '2027-07-17','2027-07-19',
+  '2027-08-15','2027-08-16',
+  '2027-09-14','2027-09-15','2027-09-16',
+  '2027-10-03','2027-10-04','2027-10-09','2027-10-11',
+  '2027-12-25','2027-12-27',
+
+  // 2028
+  '2028-01-01',
+  '2028-01-25','2028-01-26','2028-01-27',
+  '2028-03-01',
+  '2028-04-12',
+  '2028-05-02','2028-05-05',
+  '2028-06-06',
+  '2028-07-17',
+  '2028-08-15',
+  '2028-10-02','2028-10-03','2028-10-04','2028-10-05',
+  '2028-10-09',
+  '2028-12-25',
+
+  // 2029
+  '2029-01-01',
+  '2029-02-12','2029-02-13','2029-02-14',
+  '2029-03-01',
+  '2029-05-05','2029-05-07','2029-05-20','2029-05-21',
+  '2029-06-06',
+  '2029-07-17',
+  '2029-08-15',
+  '2029-09-21','2029-09-22','2029-09-23','2029-09-24',
+  '2029-10-03','2029-10-09',
+  '2029-12-25',
+
+  // 2030
+  '2030-01-01',
+  '2030-02-02','2030-02-03','2030-02-04','2030-02-05',
+  '2030-03-01',
+  '2030-05-05','2030-05-06','2030-05-09',
+  '2030-06-05','2030-06-06',
+  '2030-07-17',
+  '2030-08-15',
+  '2030-09-11','2030-09-12','2030-09-13',
+  '2030-10-03','2030-10-09',
+  '2030-12-25'
+]);
+
+const isKoreanHoliday = (dateKey) => KOREAN_HOLIDAYS.has(dateKey);
+
 let totalAttendance = 0;
 let totalAbsent = 0;
 let totalUnsupported = 0;
@@ -1012,6 +1097,7 @@ for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
 if (hideWeekends && (dow === 0 || dow === 6)) continue;
+if (isKoreanHoliday(dateKey)) continue;
 if (closedDateKeys.has(dateKey)) {
  totalClosed++;
  continue;
@@ -1039,27 +1125,38 @@ let overallAttendanceCount = 0;
 let overallAttendanceCapacity = 0;
 let overallOperatingDays = 0;
 
+
+
+
+
+
 const daysInMonthForStats = (mKey) => {
 const [y, m] = mKey.split('-').map(Number);
 const lastDay = new Date(y, m, 0).getDate();
 let count = 0;
 for (let d = 1; d <= lastDay; d++) {
+const dateKey = `${mKey}-${String(d).padStart(2, '0')}`;
 const dow = new Date(y, m - 1, d).getDay();
-if (dow !== 0 && dow !== 6) count++;
+if (dow !== 0 && dow !== 6 && !isKoreanHoliday(dateKey)) count++;
 }
 return count;
 };
 const getClosedDateKeys = (mKey) => {
+// '휴원'은 개인별 상태가 아니라 기관 전체가 휴원한 날로만 운영일수에서 제외합니다.
+// 한 명만 휴원으로 입력한 경우에는 다른 이용인의 운영일수까지 줄어들지 않습니다.
 const closedDateKeys = new Set();
-participants.forEach(p => {
-const days = checklistData[p.id]?.[mKey]?.days || {};
-Object.entries(days).forEach(([dateKey, d]) => {
-if (d.status !== '휴원') return;
-const [yy, mm, dd] = dateKey.split('-').map(Number);
-const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow !== 0 && dow !== 6) closedDateKeys.add(dateKey);
-});
-});
+if (!participants.length) return closedDateKeys;
+const lastDay = new Date(Number(mKey.slice(0, 4)), Number(mKey.slice(5, 7)), 0).getDate();
+for (let dd = 1; dd <= lastDay; dd++) {
+  const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
+  const [yy, mm] = mKey.split('-').map(Number);
+  const dow = new Date(yy, mm - 1, dd).getDay();
+  if (dow === 0 || dow === 6 || isKoreanHoliday(dateKey)) continue;
+  const allClosed = participants.every(p =>
+    checklistData[p.id]?.[mKey]?.days?.[dateKey]?.status === '휴원'
+  );
+  if (allClosed) closedDateKeys.add(dateKey);
+}
 return closedDateKeys;
 };
 
@@ -1079,7 +1176,7 @@ const closedDateKeys = getClosedDateKeys(mKey);
 for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow === 0 || dow === 6 || closedDateKeys.has(dateKey)) continue;
+if (dow === 0 || dow === 6 || isKoreanHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
 personOperatingDays++;
 const d = days[dateKey] || {};
 const status = d.status || '등원';
@@ -1119,7 +1216,32 @@ overallOperatingDays += operatingDays;
 });
 overallAttendanceCapacity = participants.length * overallOperatingDays;
 }
-overallAttendanceCount = participantAttendanceStats.reduce((sum, p) => sum + p.attendance, 0);
+// 전체 선택활동 참여 횟수
+// 하루에 한 번만 집계합니다. '등원'인 날만 참여로 보고, 미지원·결석·휴원은 제외합니다.
+// 개인선택활동에서 여러 항목을 체크해도 하루 1회로만 계산합니다.
+let overallPersonalParticipationCount = 0;
+const monthsForPersonalStats = statsScope === 'month'
+  ? [monthKey]
+  : statsScope === 'year'
+    ? Array.from({length: 12}, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`).filter(mKey => mKey >= '2026-08')
+    : Array.from(new Set(participants.flatMap(p => Object.keys(checklistData[p.id] || {}))));
+participants.forEach(p => {
+  monthsForPersonalStats.forEach(mKey => {
+    const days = checklistData[p.id]?.[mKey]?.days || {};
+    const closedDateKeys = getClosedDateKeys(mKey);
+    const [yy, mm] = mKey.split('-').map(Number);
+    const lastDay = new Date(yy, mm, 0).getDate();
+    for (let dd = 1; dd <= lastDay; dd++) {
+      const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
+      const dow = new Date(yy, mm - 1, dd).getDay();
+      if (dow === 0 || dow === 6 || isKoreanHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
+      const status = days[dateKey]?.status || '등원';
+      if (status === '등원') overallPersonalParticipationCount++;
+    }
+  });
+});
+// 등원율 계산용 값은 선택활동 참여 횟수와 분리합니다.
+overallAttendanceCount = totalAttendance + totalUnsupported;
 
 const monthlyTrend = targetKeys.map(mKey => {
 const days = pData[mKey]?.days || {};
@@ -1130,7 +1252,7 @@ let att = 0, unsupported = 0, absent = 0, tot = 0, pTot = 0;
 for (let dd = 1; dd <= lastDay; dd++) {
 const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
 const dow = new Date(yy, mm - 1, dd).getDay();
-if (dow === 0 || dow === 6 || closedDateKeys.has(dateKey)) continue;
+if (dow === 0 || dow === 6 || isKoreanHoliday(dateKey) || closedDateKeys.has(dateKey)) continue;
 tot++;
 const d = days[dateKey] || {};
 const status = d.status || '등원';
@@ -1162,6 +1284,7 @@ mealCounts,
 maxPersonalCount,
 targetMonthKeysCount: targetKeys.length || 1,
 overallAttendanceCount,
+overallPersonalParticipationCount,
 overallAttendanceCapacity,
 overallOperatingDays,
 overallAttendanceRateAll: overallAttendanceCapacity > 0 ? Math.round((overallAttendanceCount / overallAttendanceCapacity) * 100) : 0,
@@ -1709,7 +1832,7 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
 {monthDays.map(d => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
-const status = dayData.status || '등원';
+const status = dayData.dailyStatus ?? dayData.status ?? '등원';
 const oral = dayData.oral || '';
 const meal = dayData.meal || '';
 const isInactive = status === '결석' || status === '미지원' || status === '휴원';
@@ -1752,7 +1875,7 @@ status === '등원'
 key={option}
 type="button"
 onClick={() => {
-handleStatusChange(d.dateKey, option);
+handleDailyStatusChange(d.dateKey, option);
 setOpenStatusDate(null);
 }}
 className={`block w-full px-2 py-1.5 text-[10px] font-black text-center hover:bg-slate-100 dark:hover:bg-slate-700 ${
@@ -2144,16 +2267,10 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 </div>
 </div>
 <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 text-xs">
-<div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
-<div className="bg-indigo-50 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-200 dark:border-indigo-800 text-center">
-<span className="text-[11px] text-indigo-700 dark:text-indigo-400 block font-semibold mb-0.5">{year}년 {month}월 운영일수</span>
-<span className="text-2xl font-black text-indigo-700 dark:text-indigo-300">
-{statsScope === 'month' ? extendedStats.overallOperatingDays : extendedStats.overallOperatingDays}일
-</span>
-<span className="text-[10px] text-indigo-600/80 block mt-0.5 font-medium">
-주말·휴원 제외
-</span>
+<div className="text-sm font-extrabold text-slate-600 dark:text-slate-300 mb-[-4px]">
+{year}년 {month}월 운영일수(주말·휴원·공휴일 제외): {extendedStats.overallOperatingDays}일
 </div>
+<div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
 <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center">
 <span className="text-[11px] text-emerald-700 dark:text-emerald-400 block font-semibold mb-0.5">등원율</span>
 <span className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
@@ -2164,12 +2281,12 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 </span>
 </div>
 <div className="bg-violet-50 dark:bg-violet-950/40 p-3 rounded-xl border border-violet-200 dark:border-violet-800 text-center">
-<span className="text-[11px] text-violet-700 dark:text-violet-400 block font-semibold mb-0.5">전체 이용인 등원</span>
+<span className="text-[11px] text-violet-700 dark:text-violet-400 block font-semibold mb-0.5">전체 선택활동 참여 횟수</span>
 <span className="text-2xl font-black text-violet-700 dark:text-violet-300">
-{extendedStats.overallAttendanceCount}회
+{extendedStats.overallPersonalParticipationCount}회
 </span>
 <span className="text-[10px] text-violet-600/80 block mt-0.5 font-medium">
-{participants.length}명 × {Math.round(extendedStats.overallAttendanceCapacity / Math.max(participants.length, 1))}일 / {extendedStats.overallAttendanceCapacity}회
+이용인별 하루 1회 · 등원만 집계 (미지원·결석·휴원 제외)
 </span>
 </div>
 <div className="bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200 dark:border-rose-800 text-center">
@@ -2444,7 +2561,7 @@ root.render(<App />);
   setInterval(async () => {
     try {
       const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
-      if (!r.ok) return;ㅍ
+      if (!r.ok) return;
       const result = await r.json();
       if (!result || !result.data) return;
 
