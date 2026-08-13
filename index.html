@@ -672,6 +672,10 @@ const [sharedReady, setSharedReady] = useState(false);
 const [sharedSyncing, setSharedSyncing] = useState(false);
 const [sharedSyncError, setSharedSyncError] = useState('');
 const sharedSkipSaveRef = React.useRef({ settings: true, checklists: true });
+const checklistDirtyRef = React.useRef(false);
+const lastChecklistLocalChangeRef = React.useRef(0);
+const checklistDataRef = React.useRef(checklistData);
+useEffect(() => { checklistDataRef.current = checklistData; }, [checklistData]);
 useEffect(() => {
 localStorage.setItem('daycare_accounts', JSON.stringify(accounts));
 }, [accounts]);
@@ -713,6 +717,8 @@ useEffect(() => {
       }
       if (remoteChecklists && typeof remoteChecklists === 'object') {
         setChecklistData(remoteChecklists);
+        checklistDirtyRef.current = false;
+        lastChecklistLocalChangeRef.current = 0;
       }
       sharedSkipSaveRef.current.settings = !!(remoteSettings && Object.keys(remoteSettings).length);
       sharedSkipSaveRef.current.checklists = !!(remoteChecklists && Object.keys(remoteChecklists).length);
@@ -756,13 +762,20 @@ useEffect(() => {
     sharedSkipSaveRef.current.checklists = false;
     return;
   }
+  const dataToSave = checklistData;
   const timer = setTimeout(async () => {
     try {
       setSharedSyncing(true);
-      await sharedPut(SHARED_CHECKLISTS_KEY, checklistData);
+      await sharedPut(SHARED_CHECKLISTS_KEY, dataToSave);
+      // 저장 요청이 끝난 뒤 새로 수정된 내용이 없다면 dirty 해제
+      if (checklistDataRef.current === dataToSave) {
+        checklistDirtyRef.current = false;
+      }
       setSharedSyncError('');
     } catch (err) {
       console.error(err);
+      // 저장 실패 시 dirty 상태를 유지하여 다음 변경/재시도 때 덮어쓰지 않도록 함
+      checklistDirtyRef.current = true;
       setSharedSyncError('체크리스트 공용 저장 중 오류가 발생했습니다.');
     } finally { setSharedSyncing(false); }
   }, 500);
@@ -786,8 +799,15 @@ useEffect(() => {
         if (remoteSettings.participants) setParticipants(remoteSettings.participants);
       }
       if (remoteChecklists && typeof remoteChecklists === 'object') {
-        sharedSkipSaveRef.current.checklists = true;
-        setChecklistData(remoteChecklists);
+        const localChecklist = checklistDataRef.current;
+        const isSame = JSON.stringify(localChecklist) === JSON.stringify(remoteChecklists);
+        const hasRecentLocalEdit = checklistDirtyRef.current || (Date.now() - lastChecklistLocalChangeRef.current < 3000);
+        // 내가 방금 입력/체크한 내용이 있으면 서버의 오래된 데이터를 가져와 덮어쓰지 않습니다.
+        if (!isSame && !hasRecentLocalEdit) {
+          sharedSkipSaveRef.current.checklists = true;
+          checklistDirtyRef.current = false;
+          setChecklistData(remoteChecklists);
+        }
       }
       setSharedSyncError('');
     } catch (err) {
@@ -875,6 +895,8 @@ const currentMonthRecord = useMemo(() => {
 return checklistData[selectedParticipantId]?.[monthKey] || { days: {}, integratedPersonalNote: '', integratedDailyNote: '' };
 }, [checklistData, selectedParticipantId, monthKey]);
 const updateChecklist = (updater) => {
+checklistDirtyRef.current = true;
+lastChecklistLocalChangeRef.current = Date.now();
 setChecklistData(prev => {
 const pData = prev[selectedParticipantId] || {};
 const mData = pData[monthKey] || { days: {}, integratedPersonalNote: '', integratedDailyNote: '' };
@@ -1726,7 +1748,7 @@ hideWeekends ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/40' : 'bg-
 </tr>
 </thead>
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
-{monthDays.map(d => {
+{monthDays.map((d, dayIndex) => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
 const status = dayData.status || '등원';
 const holidayName = getKoreanHolidayName(d.dateKey);
@@ -1767,7 +1789,7 @@ displayStatus === '등원'
 {displayStatus}
 </button>
 {!holidayName && openStatusDate === d.dateKey && (
-<div className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-1 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print">
+<div className={`absolute z-40 left-1/2 -translate-x-1/2 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print ${dayIndex >= monthDays.length - 3 ? "bottom-full mb-1" : "top-full mt-1"}`}>
 {['등원', '결석', '미지원', '휴원'].map(option => (
 <button
 key={option}
@@ -1892,7 +1914,7 @@ className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700
 </tr>
 </thead>
 <tbody className="divide-y divide-slate-200 dark:divide-slate-700 print:divide-black">
-{monthDays.map(d => {
+{monthDays.map((d, dayIndex) => {
 const dayData = currentMonthRecord.days[d.dateKey] || {};
 const status = dayData.dailyStatus ?? dayData.status ?? '등원';
 const oral = dayData.oral || '';
@@ -1931,7 +1953,7 @@ status === '등원'
 {status}
 </button>
 {openStatusDate === d.dateKey && (
-<div className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-1 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print">
+<div className={`absolute z-40 left-1/2 -translate-x-1/2 w-[72px] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg overflow-hidden no-print ${dayIndex >= monthDays.length - 3 ? "bottom-full mb-1" : "top-full mt-1"}`}>
 {['등원', '결석', '미지원', '휴원'].map(option => (
 <button
 key={option}
@@ -2543,104 +2565,7 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(<App />);
 </script>
 
-<script>
-(function () {
-  const SHARED_KEYS = [
-    'daycare_accounts_v1',
-    'daycare_facility_v1',
-    'daycare_teachers_v1',
-    'daycare_participants_v1',
-    'daycare_checklists_v2'
-  ];
 
-  const originalSetItem = localStorage.setItem.bind(localStorage);
-  const originalRemoveItem = localStorage.removeItem.bind(localStorage);
-
-  function snapshot() {
-    const data = {};
-    SHARED_KEYS.forEach(k => {
-      const v = localStorage.getItem(k);
-      if (v !== null) data[k] = v;
-    });
-    return data;
-  }
-
-  async function pushShared() {
-    try {
-      await fetch('/api/data', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({data: snapshot()})
-      });
-    } catch (e) {
-      console.warn('공용 저장소 동기화 실패:', e);
-    }
-  }
-
-  localStorage.setItem = function(key, value) {
-    originalSetItem(key, value);
-    if (SHARED_KEYS.includes(key)) {
-      clearTimeout(window.__rowoonSyncTimer);
-      window.__rowoonSyncTimer = setTimeout(pushShared, 250);
-    }
-  };
-
-  localStorage.removeItem = function(key) {
-    originalRemoveItem(key);
-    if (SHARED_KEYS.includes(key)) {
-      clearTimeout(window.__rowoonSyncTimer);
-      window.__rowoonSyncTimer = setTimeout(pushShared, 250);
-    }
-  };
-
-  async function pullShared() {
-    try {
-      const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
-      if (!r.ok) return;
-      const result = await r.json();
-      if (!result || !result.data) return;
-
-      Object.entries(result.data).forEach(([key, value]) => {
-        if (SHARED_KEYS.includes(key) && value != null) {
-          originalSetItem(key, value);
-        }
-      });
-
-      // Reload only after the initial pull, so React initializes from shared data.
-      if (!window.__rowoonSharedInitialized) {
-        window.__rowoonSharedInitialized = true;
-        location.reload();
-      }
-    } catch (e) {
-      console.warn('공용 데이터 불러오기 실패:', e);
-    }
-  }
-
-  // Pull shared data before the app gets a chance to render.
-  pullShared();
-
-  // Keep computers in sync while the app is open.
-  setInterval(async () => {
-    try {
-      const r = await fetch('/api/data?ts=' + Date.now(), {cache:'no-store'});
-      if (!r.ok) return;
-      const result = await r.json();
-      if (!result || !result.data) return;
-
-      let changed = false;
-      Object.entries(result.data).forEach(([key, value]) => {
-        if (!SHARED_KEYS.includes(key) || value == null) return;
-        if (localStorage.getItem(key) !== value) {
-          originalSetItem(key, value);
-          changed = true;
-        }
-      });
-
-      if (changed) location.reload();
-    } catch (e) {}
-  }, 5000);
-})();
-</script>
 
 </body>
 </html>
