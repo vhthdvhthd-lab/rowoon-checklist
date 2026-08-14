@@ -628,6 +628,8 @@ return saved ? JSON.parse(saved) : INITIAL_PARTICIPANTS;
 });
 const [selectedParticipantId, setSelectedParticipantId] = useState('1');
 const [teacherFilter, setTeacherFilter] = useState('전체');
+const participantScrollRef = React.useRef(null);
+const participantDragRef = React.useRef({ dragging: false, startX: 0, startScrollLeft: 0 });
 const today = useMemo(() => new Date(), []);
 const initialYearMonth = useMemo(() => getInitialYearMonth(), []);
 const [year, setYear] = useState(initialYearMonth.year);
@@ -663,6 +665,7 @@ const [newTeacherName, setNewTeacherName] = useState('');
 const [newTeacherCode, setNewTeacherCode] = useState('');
 const [deleteConfirmTarget, setDeleteConfirmTarget] = useState(null);
 const [statsScope, setStatsScope] = useState('month');
+const [statsView, setStatsView] = useState('person');
 const [openStatusDate, setOpenStatusDate] = useState(null);
 const [checklistData, setChecklistData] = useState(() => {
 const saved = localStorage.getItem('daycare_checklists_v2');
@@ -887,6 +890,36 @@ const filteredParticipants = useMemo(() => {
 if (teacherFilter === '전체') return participants;
 return participants.filter(p => p.teacher === teacherFilter);
 }, [participants, teacherFilter]);
+const scrollParticipants = (direction) => {
+  const el = participantScrollRef.current;
+  if (!el) return;
+  const amount = Math.max(260, Math.floor(el.clientWidth * 0.75));
+  el.scrollBy({ left: direction * amount, behavior: 'smooth' });
+};
+const handleParticipantDragStart = (e) => {
+  const el = participantScrollRef.current;
+  if (!el) return;
+  participantDragRef.current = { dragging: true, startX: e.clientX, startScrollLeft: el.scrollLeft };
+  el.classList.add('cursor-grabbing');
+};
+const handleParticipantDragMove = (e) => {
+  const state = participantDragRef.current;
+  const el = participantScrollRef.current;
+  if (!state.dragging || !el) return;
+  e.preventDefault();
+  el.scrollLeft = state.startScrollLeft - (e.clientX - state.startX) * 1.2;
+};
+const handleParticipantDragEnd = () => {
+  const el = participantScrollRef.current;
+  participantDragRef.current.dragging = false;
+  if (el) el.classList.remove('cursor-grabbing');
+};
+const goHome = () => {
+  if (participants.length) setSelectedParticipantId(participants[0].id);
+  setTeacherFilter('전체');
+  setViewTab('personal');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 const currentParticipant = useMemo(() => {
 return participants.find(p => p.id === selectedParticipantId) || participants[0] || { id: '1', name: '강승희', teacher: '김교사' };
 }, [participants, selectedParticipantId]);
@@ -1365,6 +1398,114 @@ participantAttendanceStats,
 monthlyTrend
 };
 }, [checklistData, selectedParticipantId, statsScope, year, monthKey]);
+
+// 전체 이용인 통계: 현재 조회기간의 모든 이용인을 합산합니다.
+const globalStats = useMemo(() => {
+  const scopeMonths = statsScope === 'month'
+    ? [monthKey]
+    : statsScope === 'year'
+      ? Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`).filter(k => k >= '2026-08')
+      : Array.from(new Set(participants.flatMap(p => Object.keys(checklistData[p.id] || {}))));
+
+  const isInstitutionClosed = (mKey, dateKey) => {
+    if (!participants.length) return false;
+    return participants.every(p => checklistData[p.id]?.[mKey]?.days?.[dateKey]?.status === '휴원');
+  };
+
+  const personalCounts = { study: 0, tv: 0, fineMotor: 0, creation: 0, other: 0 };
+  const oralCounts = { 상: 0, 중: 0, 하: 0 };
+  const mealCounts = { 상: 0, 중: 0, 하: 0 };
+  let totalAttendance = 0;
+  let totalAbsent = 0;
+  let totalUnsupported = 0;
+  let totalPersonalParticipation = 0;
+  let totalOperatingDays = 0;
+  let totalInstitutionClosed = 0;
+  const monthlyTrend = [];
+
+  scopeMonths.forEach(mKey => {
+    const [yy, mm] = mKey.split('-').map(Number);
+    const lastDay = new Date(yy, mm, 0).getDate();
+    let monthOperatingDays = 0;
+    let monthAttendance = 0;
+    let monthUnsupported = 0;
+    let monthPersonalTotal = 0;
+
+    for (let dd = 1; dd <= lastDay; dd++) {
+      const dateKey = `${mKey}-${String(dd).padStart(2, '0')}`;
+      const dow = new Date(yy, mm - 1, dd).getDay();
+      if (dow === 0 || dow === 6 || isKoreanHoliday(dateKey)) continue;
+
+      if (isInstitutionClosed(mKey, dateKey)) {
+        totalInstitutionClosed++;
+        continue;
+      }
+
+      monthOperatingDays++;
+      totalOperatingDays++;
+
+      participants.forEach(p => {
+        const d = checklistData[p.id]?.[mKey]?.days?.[dateKey] || {};
+        const status = d.status || '등원';
+
+        if (status === '등원') {
+          totalAttendance++;
+          monthAttendance++;
+          totalPersonalParticipation++;
+        } else if (status === '결석') {
+          totalAbsent++;
+        } else if (status === '미지원') {
+          totalUnsupported++;
+          monthUnsupported++;
+        }
+
+        if (d.personal) {
+          Object.keys(d.personal).forEach(k => {
+            if (d.personal[k]) {
+              personalCounts[k] = (personalCounts[k] || 0) + 1;
+              monthPersonalTotal++;
+            }
+          });
+        }
+        if (d.oral) oralCounts[d.oral] = (oralCounts[d.oral] || 0) + 1;
+        if (d.meal) mealCounts[d.meal] = (mealCounts[d.meal] || 0) + 1;
+      });
+    }
+
+    const capacity = participants.length * monthOperatingDays;
+    monthlyTrend.push({
+      monthKey: mKey,
+      label: `${mKey.split('-')[1]}월`,
+      attendRate: capacity > 0 ? Math.round(((monthAttendance + monthUnsupported) / capacity) * 100) : 0,
+      attendance: monthAttendance,
+      personalTotal: monthPersonalTotal
+    });
+  });
+
+  const denominator = totalAttendance + totalAbsent + totalUnsupported;
+  const overallAttendanceRate = denominator > 0
+    ? Math.round(((totalAttendance + totalUnsupported) / denominator) * 100)
+    : 0;
+
+  return {
+    totalAttendance,
+    totalAbsent,
+    totalUnsupported,
+    totalClosed: totalInstitutionClosed,
+    overallAttendanceRate,
+    overallPersonalParticipationCount: totalPersonalParticipation,
+    personalCounts,
+    oralCounts,
+    mealCounts,
+    maxPersonalCount: Math.max(...Object.values(personalCounts), 1),
+    targetMonthKeysCount: scopeMonths.length || 1,
+    overallOperatingDays: totalOperatingDays,
+    monthlyTrend
+  };
+}, [checklistData, participants, statsScope, year, monthKey]);
+
+const displayStats = statsView === 'all' ? globalStats : extendedStats;
+
 if (!currentAccount) {
 return (
 <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 font-sans">
@@ -1466,11 +1607,14 @@ return (
 {sharedSyncError && <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-4 py-2 rounded-xl shadow-xl text-xs font-bold no-print">{sharedSyncError}</div>}
 <header className="bg-[#192755] text-white shadow-lg sticky top-0 z-30 no-print">
 <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+<div className="flex items-center gap-2">
+<button onClick={goHome} className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-extrabold text-white transition cursor-pointer shrink-0" title="홈으로">⌂ 홈</button>
 <div className="flex items-center gap-3">
 <div>
 <h1 className="font-extrabold text-base sm:text-lg leading-tight tracking-tight flex items-center gap-2">
 {facilityInfo.name}
 </h1>
+</div>
 </div>
 </div>
 <div className="flex items-center flex-wrap gap-2 text-xs">
@@ -1614,7 +1758,9 @@ teacherFilter === currentAccount.teacherName
 <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 ml-1"></span> 미완료
 </div>
 </div>
-<div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+<div className="flex items-center gap-1.5">
+<button type="button" onClick={() => scrollParticipants(-1)} className="shrink-0 w-8 h-10 rounded-xl bg-[#192755] text-white hover:bg-[#233775] shadow-sm border border-slate-300 dark:border-slate-600 font-black text-lg leading-none cursor-pointer" title="이용인 목록 왼쪽으로">‹</button>
+<div ref={participantScrollRef} className="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto py-1 scrollbar-none cursor-grab select-none" onMouseDown={handleParticipantDragStart} onMouseMove={handleParticipantDragMove} onMouseUp={handleParticipantDragEnd} onMouseLeave={handleParticipantDragEnd}>
 {filteredParticipants.map(p => {
 const isSelected = p.id === selectedParticipantId;
 const completedToday = isTodayChecked(p.id);
@@ -1650,6 +1796,8 @@ isSelected
 </button>
 );
 })}
+</div>
+<button type="button" onClick={() => scrollParticipants(1)} className="shrink-0 w-8 h-10 rounded-xl bg-[#192755] text-white hover:bg-[#233775] shadow-sm border border-slate-300 dark:border-slate-600 font-black text-lg leading-none cursor-pointer" title="이용인 목록 오른쪽으로">›</button>
 </div>
 </div>
 </div>
@@ -2326,10 +2474,10 @@ className="flex-1 py-2 bg-rose-600 text-white font-extrabold rounded-xl text-xs 
 <IconBarChart2 className="w-5 h-5 text-[#FD6D9A]" />
 <div>
 <h2 className="font-bold text-base leading-tight">
-{currentParticipant.name} 이용인 상세 통계분석
+{statsView === 'all' ? '전체 이용인 통계분석' : `${currentParticipant.name} 이용인 상세 통계분석`}
 </h2>
 <p className="text-[11px] text-slate-300">
-담당: {currentParticipant.teacher} 교사
+{statsView === 'all' ? `등록 이용인 ${participants.length}명 전체 합산` : `담당: ${currentParticipant.teacher} 교사`}
 </p>
 </div>
 </div>
@@ -2346,6 +2494,16 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 조회 기간:
 </span>
 <div className="flex flex-wrap items-center justify-end gap-1.5">
+<div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+<button
+onClick={() => setStatsView('person')}
+className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${statsView === 'person' ? 'bg-[#192755] text-white' : 'text-slate-600 dark:text-slate-300'}`}
+>개인별</button>
+<button
+onClick={() => setStatsView('all')}
+className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${statsView === 'all' ? 'bg-[#FD6D9A] text-white' : 'text-slate-600 dark:text-slate-300'}`}
+>전체 이용인</button>
+</div>
 <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
 <select value={year} onChange={(e) => {
   const nextYear = Number(e.target.value);
@@ -2365,22 +2523,24 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 </div>
 <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1 text-xs">
 <div className="text-sm font-extrabold text-slate-600 dark:text-slate-300 mb-[-4px]">
-{year}년 {month}월 운영일수(주말·휴원·공휴일 제외): {extendedStats.overallOperatingDays}일
+{statsView === 'all'
+  ? `${year}년 ${month}월 운영일수(주말·휴원·공휴일 제외): ${displayStats.overallOperatingDays}일 · 등록 이용인 ${participants.length}명 전체 합산`
+  : `${year}년 ${month}월 운영일수(주말·휴원·공휴일 제외): ${displayStats.overallOperatingDays}일`}
 </div>
 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
 <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 text-center">
 <span className="text-[11px] text-emerald-700 dark:text-emerald-400 block font-semibold mb-0.5">등원율</span>
 <span className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
-{extendedStats.overallAttendanceRate}%
+{displayStats.overallAttendanceRate}%
 </span>
 <span className="text-[10px] text-emerald-600/80 block mt-0.5 font-medium">
-등원 {extendedStats.totalAttendance}일 · 미지원 {extendedStats.totalUnsupported}일
+등원 {displayStats.totalAttendance}일 · 미지원 {displayStats.totalUnsupported}일
 </span>
 </div>
 <div className="bg-violet-50 dark:bg-violet-950/40 p-3 rounded-xl border border-violet-200 dark:border-violet-800 text-center">
 <span className="text-[11px] text-violet-700 dark:text-violet-400 block font-semibold mb-0.5">전체 선택활동 참여 횟수</span>
 <span className="text-2xl font-black text-violet-700 dark:text-violet-300">
-{extendedStats.overallPersonalParticipationCount}회
+{displayStats.overallPersonalParticipationCount}회
 </span>
 <span className="text-[10px] text-violet-600/80 block mt-0.5 font-medium">
 이용인별 하루 1회 · 등원만 집계 (미지원·결석·휴원 제외)
@@ -2389,18 +2549,18 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 <div className="bg-rose-50 dark:bg-rose-950/40 p-3 rounded-xl border border-rose-200 dark:border-rose-800 text-center">
 <span className="text-[11px] text-rose-700 dark:text-rose-400 block font-semibold mb-0.5">결석 일수</span>
 <span className="text-2xl font-black text-rose-700 dark:text-rose-300">
-{extendedStats.totalAbsent}일
+{displayStats.totalAbsent}일
 </span>
 <span className="text-[10px] text-rose-600/80 block mt-0.5 font-medium">
-미지원: {extendedStats.totalUnsupported}일
+미지원: {displayStats.totalUnsupported}일
 <br />
-휴원: {extendedStats.totalClosed}일
+휴원: {displayStats.totalClosed}일
 </span>
 </div>
 <div className="bg-sky-50 dark:bg-sky-950/40 p-3 rounded-xl border border-sky-200 dark:border-sky-800 text-center">
 <span className="text-[11px] text-sky-700 dark:text-sky-400 block font-semibold mb-0.5">개인활동 총 횟수</span>
 <span className="text-2xl font-black text-sky-700 dark:text-sky-300">
-{Object.values(extendedStats.personalCounts).reduce((a, b) => a + b, 0)}회
+{Object.values(displayStats.personalCounts).reduce((a, b) => a + b, 0)}회
 </span>
 <span className="text-[10px] text-sky-600/80 block mt-0.5 font-medium">
 5가지 활동 합계
@@ -2409,7 +2569,7 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 <div className="bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200 dark:border-amber-800 text-center">
 <span className="text-[11px] text-amber-700 dark:text-amber-400 block font-semibold mb-0.5">집계 대상 월</span>
 <span className="text-2xl font-black text-amber-700 dark:text-amber-300">
-{extendedStats.targetMonthKeysCount}개월
+{displayStats.targetMonthKeysCount}개월
 </span>
 <span className="text-[10px] text-amber-600/80 block mt-0.5 font-medium">
 기록 데이터 기반
@@ -2420,7 +2580,7 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 <div className="flex items-center justify-between mb-3">
 <h3 className="font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 text-xs">
 <IconUsers className="w-4 h-4 text-violet-500" />
-<span>이용인별 등원 현황</span>
+<span>{statsView === 'all' ? '이용인별 현황 (전체 이용인)' : '이용인별 등원 현황'}</span>
 </h3>
 <span className="text-[10px] text-slate-400 font-medium">{statsScope === 'month' ? `${year}년 ${month}월` : statsScope === 'year' ? `${year}년` : '전체 기록'}</span>
 </div>
@@ -2437,6 +2597,16 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 </tr>
 </thead>
 <tbody>
+{statsView === 'all' && (
+<tr className="bg-violet-50 dark:bg-violet-950/30 border-t border-slate-200 dark:border-slate-700">
+<td className="px-2.5 py-2 font-black text-violet-700 dark:text-violet-300 whitespace-nowrap">전체 합계</td>
+<td className="px-2.5 py-2 text-center font-black text-emerald-600 dark:text-emerald-400">{displayStats.totalAttendance}회</td>
+<td className="px-2.5 py-2 text-center font-bold text-rose-600 dark:text-rose-400">{displayStats.totalAbsent}회</td>
+<td className="px-2.5 py-2 text-center font-bold text-amber-600 dark:text-amber-400">{displayStats.totalUnsupported}회</td>
+<td className="px-2.5 py-2 text-center font-bold text-slate-500 dark:text-slate-400">{displayStats.totalClosed}일</td>
+<td className="px-2.5 py-2 text-center font-black text-violet-600 dark:text-violet-400">{displayStats.overallAttendanceRate}%</td>
+</tr>
+)}
 {extendedStats.participantAttendanceStats.map(ps => (
 <tr key={ps.id} className="border-t border-slate-200 dark:border-slate-700">
 <td className="px-2.5 py-2 font-extrabold text-slate-700 dark:text-slate-200 whitespace-nowrap">{ps.name}</td>
@@ -2459,13 +2629,13 @@ className="p-1 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white tra
 <span>개인선택활동 참여 분포 (그래프)</span>
 </h3>
 <span className="text-[10px] text-slate-400 font-medium">
-최대 {extendedStats.maxPersonalCount}회 기준
+최대 {displayStats.maxPersonalCount}회 기준
 </span>
 </div>
 <div className="space-y-3 pt-1">
 {PERSONAL_ACTIVITIES.map(act => {
-const count = extendedStats.personalCounts[act.key] || 0;
-const percentage = Math.round((count / extendedStats.maxPersonalCount) * 100);
+const count = displayStats.personalCounts[act.key] || 0;
+const percentage = Math.round((count / displayStats.maxPersonalCount) * 100);
 return (
 <div key={act.key} className="space-y-1">
 <div className="flex justify-between items-center text-xs font-semibold">
@@ -2485,14 +2655,14 @@ style={{ width: `${Math.max(percentage, 3)}%` }}
 })}
 </div>
 </div>
-{extendedStats.monthlyTrend.length > 0 && (
+{displayStats.monthlyTrend.length > 0 && (
 <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
 <h3 className="font-extrabold text-slate-800 dark:text-slate-100 mb-3 flex items-center gap-1.5 text-xs">
 <IconBarChart2 className="w-4 h-4 text-sky-500" />
 <span>월별 등원율 및 활동 추이 그래프</span>
 </h3>
 <div className="flex items-end gap-3 h-32 pt-6 border-b border-slate-200 dark:border-slate-700 overflow-x-auto pb-2">
-{extendedStats.monthlyTrend.map(m => (
+{displayStats.monthlyTrend.map(m => (
 <div key={m.monthKey} className="flex-1 min-w-[50px] flex flex-col items-center h-full justify-end group">
 <div className="text-[10px] font-extrabold text-[#192755] dark:text-sky-400 mb-1 opacity-90">
 {m.attendRate}%
@@ -2520,8 +2690,8 @@ title={`${m.label}: 등원 ${m.attendance}일 (${m.attendRate}%) / 개인활동 
 </h4>
 <div className="space-y-2">
 {['상', '중', '하'].map(lvl => {
-const c = extendedStats.oralCounts[lvl] || 0;
-const tot = Object.values(extendedStats.oralCounts).reduce((a, b) => a + b, 0) || 1;
+const c = displayStats.oralCounts[lvl] || 0;
+const tot = Object.values(displayStats.oralCounts).reduce((a, b) => a + b, 0) || 1;
 const pct = Math.round((c / tot) * 100);
 return (
 <div key={lvl} className="flex items-center gap-2 text-xs">
@@ -2542,8 +2712,8 @@ return (
 </h4>
 <div className="space-y-2">
 {['상', '중', '하'].map(lvl => {
-const c = extendedStats.mealCounts[lvl] || 0;
-const tot = Object.values(extendedStats.mealCounts).reduce((a, b) => a + b, 0) || 1;
+const c = displayStats.mealCounts[lvl] || 0;
+const tot = Object.values(displayStats.mealCounts).reduce((a, b) => a + b, 0) || 1;
 const pct = Math.round((c / tot) * 100);
 return (
 <div key={lvl} className="flex items-center gap-2 text-xs">
